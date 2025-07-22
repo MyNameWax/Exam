@@ -37,3 +37,23 @@ CREATE TABLE `exam`
     KEY           `idx_time` (`create_time`,`update_time`),
     KEY           `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='考试信息表';
+
+
+CREATE TABLE `exam_question`
+(
+    `id`            VARCHAR(36) NOT NULL COMMENT '题目ID',
+    `exam_id`       VARCHAR(36) NOT NULL COMMENT '所属考试ID',
+    `question_type` TINYINT     NOT NULL COMMENT '题目类型',
+    `content`       text        NOT NULL COMMENT '题目内容',
+    `options`       text COMMENT '选项(JSON格式)',
+    `answer`        text        NOT NULL COMMENT '正确答案',
+    `score`         DOUBLE         NOT NULL COMMENT '题目分值',
+    `sort`          DOUBLE                  DEFAULT '0' COMMENT '排序',
+    `create_by`     VARCHAR(36) NOT NULL COMMENT '创建人',
+    `create_time`   DATETIME    NOT NULL COMMENT '创建时间',
+    `update_by`     VARCHAR(36) NOT NULL COMMENT '修改人',
+    `update_time`   DATETIME    NOT NULL COMMENT '修改时间',
+    `del_flag`      TINYINT     NOT NULL DEFAULT '0' COMMENT '是否删除(0: 未删除 1:已删除)',
+    PRIMARY KEY (`id`),
+    KEY             `idx_exam_id` ( `exam_id` )
+) ENGINE = INNODB DEFAULT CHARSET = utf8mb4 COMMENT = '考试题目表';

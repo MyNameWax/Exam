@@ -10,6 +10,8 @@ import lombok.ToString;
 public enum DataResultCodeEnum {
     SUCCESS(200, "成功"),
     FAIL(500, "系统错误"),
+    // 系统相关
+    REQUEST_ERROR(501, "请求参数不合法"),
     // 考生相关
     UNAUTHORIZED(401, "请先登录"),
     USERNAME_PASSWORD_ERROR(402, "考生号或校验码错误"),

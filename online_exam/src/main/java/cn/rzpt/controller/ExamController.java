@@ -2,6 +2,7 @@ package cn.rzpt.controller;
 
 import cn.rzpt.anno.PassLogin;
 import cn.rzpt.common.global.result.DataResult;
+import cn.rzpt.model.po.ExamQuestion;
 import cn.rzpt.model.request.ExamAddRequest;
 import cn.rzpt.model.response.ExamUserListResponse;
 import cn.rzpt.service.ExamService;
@@ -39,6 +40,15 @@ public class ExamController {
     @PassLogin
     public DataResult<List<ExamUserListResponse>> examUserList(@RequestParam(value = "status",required = false)String status) {
         return DataResult.success(examService.examUserList(status));
+    }
+
+    @GetMapping("/v1/exam/question/{id}")
+    @Operation(summary = "考试题目列表")
+    @Parameters({
+            @Parameter(name = "id", description = "考试ID",required = true),
+    })
+    public DataResult<List<ExamQuestion>> examQuestionList(@PathVariable String id) {
+        return DataResult.success(examService.examQuestionList(id));
     }
 
 }
