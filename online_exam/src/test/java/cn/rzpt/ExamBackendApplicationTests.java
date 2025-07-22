@@ -39,7 +39,7 @@ class ExamBackendApplicationTests {
      */
     @Test
     void validateExamineeNumber() {
-        boolean isValid = SimpleKeyGenerator.validateLoginKey("1250002265907207", "rXOIM1TSGjRgZ36fB9wfrA==:DyZGKB8QGkUF67hTYAemh/W68p+70fFMA1jdbjHb5NA=");
+        boolean isValid = SimpleKeyGenerator.validateLoginKey("1250002265907207", "mL/BAwcx29062tuQOwqBGw==:hUoEL8H9z0UktyJBl75n55aKb1kbfD33cv/Wsj42+eQ=");
         System.out.println("密钥验证结果: " + isValid); //true
     }
 

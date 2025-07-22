@@ -13,7 +13,12 @@ spring:
   application:
     name: exam
 jwt:
-  secret: cereshuzhitingnizhenbangcereshuzhitingnizhenbang
+  exam:
+    secret: cereshuzhitingnizhenbangcereshuzhitingnizhenbang
+    expire: 86400
+  sys:
+    secret: cereshuzhitingnizhenbangpoieshuzhitingnibangbang
+    expire: 86400
 knife4j:
   enable: true
   setting:

@@ -7,6 +7,7 @@ import cn.rzpt.common.global.exception.GlobalException;
 import cn.rzpt.common.global.properties.JwtProperties;
 import cn.rzpt.common.global.result.DataResultCodeEnum;
 import cn.rzpt.util.JwtUtil;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
