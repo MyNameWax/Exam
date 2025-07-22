@@ -1,5 +1,6 @@
 package cn.rzpt.service.impl;
 
+import cn.rzpt.common.global.result.DataResultCodeEnum;
 import cn.rzpt.constants.SystemConstants;
 import cn.rzpt.mapper.ExamUserMapper;
 import cn.rzpt.model.bo.ExamUserLoginVO;
@@ -10,6 +11,7 @@ import cn.rzpt.properties.ExamJwtProperties;
 import cn.rzpt.service.ExamUserService;
 import cn.rzpt.util.ExamUserJwtUtil;
 import cn.rzpt.util.SimpleKeyGenerator;
+import cn.rzpt.util.ThrowUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -28,6 +31,7 @@ public class ExamUserServiceImpl extends ServiceImpl<ExamUserMapper, ExamUser> i
     @Override
     public ExamUserLoginResponse login(ExamUserLoginRequest request) {
         ExamUser examUser = this.lambdaQuery().eq(ExamUser::getExamineeNumber, request.getExamineeNumber()).eq(ExamUser::getCheckCode, request.getCheckCode()).one();
+        ThrowUtil.throwIf(Objects.isNull(examUser), DataResultCodeEnum.USERNAME_PASSWORD_ERROR);
         ExamUserLoginVO examUserLoginVO = this.validateExamUserCheckCode(examUser, SystemConstants.ExamUserLoginConstants.YES);
         return ExamUserLoginResponse.builder()
                 .id(examUser.getId())

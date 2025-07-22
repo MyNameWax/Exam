@@ -1,0 +1,44 @@
+package cn.rzpt.controller;
+
+import cn.rzpt.anno.PassLogin;
+import cn.rzpt.common.global.result.DataResult;
+import cn.rzpt.model.request.ExamAddRequest;
+import cn.rzpt.model.response.ExamUserListResponse;
+import cn.rzpt.service.ExamService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AllArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/exam")
+@AllArgsConstructor
+@Tag(name = "考试管理", description = "考试管理")
+public class ExamController {
+
+    private final ExamService examService;
+
+    @PostMapping("/v1/add")
+    @Operation(summary = "添加考试")
+    @Parameters({
+            @Parameter(name = "ExamAddRequest", description = "考试信息",required = true),
+    })
+    public DataResult<Boolean> addExam(@RequestBody ExamAddRequest examAddRequest) {
+        return DataResult.success(examService.addExam(examAddRequest));
+    }
+
+    @GetMapping("/v1/list")
+    @Operation(summary = "考试列表")
+    @Parameters({
+            @Parameter(name = "status", description = "状态",required = true),
+    })
+    @PassLogin
+    public DataResult<List<ExamUserListResponse>> examUserList(@RequestParam(value = "status",required = false)String status) {
+        return DataResult.success(examService.examUserList(status));
+    }
+
+}

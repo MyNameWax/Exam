@@ -4,9 +4,9 @@ import cn.hutool.core.util.StrUtil;
 import cn.rzpt.anno.PassLogin;
 import cn.rzpt.common.context.BaseContext;
 import cn.rzpt.common.global.exception.GlobalException;
-import cn.rzpt.common.global.properties.JwtProperties;
 import cn.rzpt.common.global.result.DataResultCodeEnum;
-import cn.rzpt.util.JwtUtil;
+import cn.rzpt.properties.ExamJwtProperties;
+import cn.rzpt.util.ExamUserJwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,7 +23,7 @@ import java.lang.reflect.Method;
 public class AuthorizationFilter implements HandlerInterceptor {
 
     public static final String AUTHORIZATION = "Authorization";
-    private final JwtProperties tokenProperties;
+    private final ExamJwtProperties examJwtProperties;
 
 
     @Override
@@ -43,7 +43,9 @@ public class AuthorizationFilter implements HandlerInterceptor {
             throw new GlobalException(DataResultCodeEnum.UNAUTHORIZED);
         }
         try {
-            JwtUtil.parseJWT(tokenProperties.getSecret(), request.getHeader(AUTHORIZATION));
+            Claims claims = ExamUserJwtUtil.parseJWT(examJwtProperties.getSecret(), request.getHeader(AUTHORIZATION));
+            String id = claims.get("id", String.class);
+            BaseContext.setCurrentId(id);
         } catch (Exception e) {
             throw new GlobalException(DataResultCodeEnum.UNAUTHORIZED);
         }

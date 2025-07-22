@@ -15,10 +15,10 @@ spring:
 jwt:
   exam:
     secret: cereshuzhitingnizhenbangcereshuzhitingnizhenbang
-    expire: 86400
+    expire: 8640000
   sys:
     secret: cereshuzhitingnizhenbangpoieshuzhitingnibangbang
-    expire: 86400
+    expire: 8640000
 knife4j:
   enable: true
   setting:

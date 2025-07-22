@@ -14,8 +14,8 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
     public void insertFill(MetaObject metaObject) {
         String userId = BaseContext.getCurrentId();
         this.strictInsertFill(metaObject, "createTime", LocalDateTime.class, LocalDateTime.now());
-        this.strictInsertFill(metaObject, "createBy", Long.class, Long.parseLong(userId));
-        this.strictInsertFill(metaObject, "updateBy", Long.class, Long.parseLong(userId));
+        this.strictInsertFill(metaObject, "createBy", String.class, userId);
+        this.strictInsertFill(metaObject, "updateBy", String.class, userId);
         this.strictInsertFill(metaObject, "updateTime", LocalDateTime.class, LocalDateTime.now());
     }
 
@@ -23,7 +23,7 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
     public void updateFill(MetaObject metaObject) {
         String userId = BaseContext.getCurrentId();
         this.strictInsertFill(metaObject, "updateTime", LocalDateTime.class, LocalDateTime.now());
-        this.strictInsertFill(metaObject, "updateBy", Long.class, Long.parseLong(userId));
+        this.strictInsertFill(metaObject, "updateBy", String.class, userId);
     }
 
 }

@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>cn.rzpt</groupId>
-    <artifactId>shopping-card-backend</artifactId>
+    <artifactId>online_exam</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>shopping-card-backend</name>
-    <description>shopping-card-backend</description>
+    <name>online_exam</name>
+    <description>online_exam</description>
     <url/>
     <licenses>
         <license/>

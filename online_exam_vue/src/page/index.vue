@@ -24,19 +24,19 @@
               size="large"
           >
             <template #prefix>
-              <UserOutlined />
+              <UserOutlined/>
             </template>
           </a-input>
         </a-form-item>
 
-        <a-form-item label="密码" name="checkCode">
+        <a-form-item label="校验码" name="checkCode">
           <a-input-password
               v-model:value="loginForm.checkCode"
-              placeholder="请输入密码"
+              placeholder="请输入校验码"
               size="large"
           >
             <template #prefix>
-              <LockOutlined />
+              <LockOutlined/>
             </template>
           </a-input-password>
         </a-form-item>
@@ -58,13 +58,34 @@
     <!-- 顶部导航和标题 -->
     <a-page-header title="我的考试" class="page-header" :show-back="false">
       <template #extra>
-        <a-button type="text" @click="refreshList">
-          <template #icon><SyncOutlined /></template>
-          刷新
-        </a-button>
+        <div class="header-extra">
+          <a-space>
+            <a-button type="text" @click="refreshList">
+              <template #icon>
+                <SyncOutlined/>
+              </template>
+              刷新
+            </a-button>
+            <a-dropdown v-if="userName" placement="bottomRight">
+              <div class="user-info">
+                <a-avatar size="small" style="background-color: #1890ff; margin-right: 8px">
+                  {{ userName.charAt(0).toUpperCase() }}
+                </a-avatar>
+                <span class="user-name">{{ userName }}</span>
+              </div>
+              <template #overlay>
+                <a-menu>
+                  <a-menu-item key="logout" @click="handleLogout">
+                    <LogoutOutlined/>
+                    退出登录
+                  </a-menu-item>
+                </a-menu>
+              </template>
+            </a-dropdown>
+          </a-space>
+        </div>
       </template>
     </a-page-header>
-
     <!-- 考试分类筛选 -->
     <div class="exam-filter">
       <a-radio-group
@@ -90,13 +111,13 @@
           <a-list-item class="exam-card">
             <template #actions>
               <span class="exam-time">
-                <clock-circle-outlined /> {{ item.examTime }}
+                <clock-circle-outlined/> {{ item.examTime }}
               </span>
               <span class="exam-duration">
-                <field-time-outlined /> 时长: {{ item.duration }}分钟
+                <field-time-outlined/> 时长: {{ item.duration }}分钟
               </span>
               <span class="exam-score">
-                <star-outlined /> 总分: {{ item.totalScore }}分
+                <star-outlined/> 总分: {{ item.totalScore }}分
               </span>
             </template>
             <template #extra>
@@ -114,7 +135,8 @@
                 <div class="exam-title">
                   <span>{{ item.title }}</span>
                   <a-tag v-if="item.isNew" color="red" style="margin-left: 8px"
-                  >新</a-tag
+                  >新
+                  </a-tag
                   >
                 </div>
               </template>
@@ -149,18 +171,20 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted,getCurrentInstance } from "vue";
+import {computed, getCurrentInstance, onMounted, reactive, ref} from "vue";
 import {
-  SyncOutlined,
   ClockCircleOutlined,
   FieldTimeOutlined,
-  StarOutlined,
-  UserOutlined,
   LockOutlined,
+  StarOutlined,
+  SyncOutlined,
+  UserOutlined,
 } from "@ant-design/icons-vue";
-import { message } from "ant-design-vue";
+import {message} from "ant-design-vue";
 import router from "../router/index.js";
-const { proxy } = getCurrentInstance()
+
+const userName = ref(localStorage.getItem("user") || "")
+const {proxy} = getCurrentInstance()
 const API = proxy.$API
 // 登录模态框显示状态
 const loginModalVisible = ref(false);
@@ -178,11 +202,11 @@ const loginForm = reactive({
 // 登录表单验证规则
 const loginRules = {
   examineeNumber: [
-    { required: true, message: "请输入考生号", trigger: "blur" },
-    { min: 16, max: 16, message: "考生号格式错误", trigger: "blur" },
+    {required: true, message: "请输入考生号", trigger: "blur"},
+    {min: 16, max: 16, message: "考生号格式错误", trigger: "blur"},
   ],
   checkCode: [
-    { required: true, message: "请输入校验码", trigger: "blur" },
+    {required: true, message: "请输入校验码", trigger: "blur"},
   ],
 };
 
@@ -195,33 +219,29 @@ const checkLoginStatus = () => {
   }
   return true;
 };
+// 退出登录
+const handleLogout = () => {
+  userName.value = ""
+  localStorage.clear()
+}
 
 // 处理登录
 const handleLogin = async () => {
-  try {
-    loginLoading.value = true;
-    await loginFormRef.value.validate();
-    API.examUser.examLogin(loginFormRef.value)
-    // 模拟登录成功
-    if (loginForm.username === "admin" && loginForm.password === "123456") {
-      localStorage.setItem("token", "mock-token-" + Date.now());
-      message.success("登录成功");
-      loginModalVisible.value = false;
-      fetchExamList(); // 重新加载考试列表
-    } else {
-      message.error("用户名或密码错误");
-    }
-  } catch (error) {
-    console.error("登录失败:", error);
-    if (error?.errorFields) {
-      message.error("请正确填写登录信息");
-    } else {
-      message.error("登录失败，请稍后重试");
-    }
-  } finally {
-    loginLoading.value = false;
+  loginLoading.value = true;
+  await loginFormRef.value.validate();
+  const res = await API.examUser.examLogin(loginForm)
+  if (res.data.code == 200) {
+    message.success("登录成功");
+    loginModalVisible.value = false;
+    localStorage.setItem("token", res.data.data.token);
+    localStorage.setItem("user", res.data.data.examineeName)
+    userName.value = res.data.data.examineeName;
+    fetchExamList();
   }
-};
+  if (res.data.code !== 200) {
+    message.error(res.data.message)
+  }
+}
 
 // 筛选状态
 const filterStatus = ref("all");
@@ -312,54 +332,28 @@ const filteredExams = computed(() => {
   return examList.value.filter((item) => item.status === targetStatus);
 });
 
-// 模拟获取考试列表数据
 const fetchExamList = async () => {
-  // 检查登录状态
   if (!checkLoginStatus()) {
     return;
   }
-
   loading.value = true;
   try {
-    // 这里应该是API调用，我们模拟数据
-    const mockData = generateMockData();
+    const mockData = await queryExamList();
     examList.value = mockData.list;
   } catch (error) {
     message.error("获取考试列表失败");
-    console.error(error);
   } finally {
     loading.value = false;
   }
 };
 
-// 生成模拟数据
-const generateMockData = () => {
-  const examTypes = ["normal", "quiz", "cert", "final"];
-  const allData = Array.from({ length: 15 }, (_, i) => ({
-    id: i + 1,
-    title: `${
-        [
-          "季度考核",
-          "25-26年JavaWeb期末考试试题",
-          "专业技能",
-          "入职考试",
-          "晋升考核",
-        ][i % 5]
-    } - ${["基础测试", "进阶评估", "综合考核"][i % 3]}`,
-    description: "请认真阅读考试说明，在规定时间内完成所有题目",
-    examTime: `2025-${(i % 12) + 1}-${(i % 28) + 1} ${i % 24}:00`,
-    duration: [30, 45, 60, 90][i % 4],
-    totalScore: [100, 120, 150][i % 3],
-    status: i % 4,
-    type: examTypes[i % examTypes.length],
-    isNew: i < 3,
-    progress:
-        [0, 20, 50, 80, 100][i % 5] * (i % 3 === 0 ? 1 : i % 3 === 1 ? 0.8 : 0.6),
-  }));
-
+// 获取考试列表
+const queryExamList = async() => {
+  const res = await API.exam.examList()
+  console.log(res)
   return {
-    list: allData,
-    total: allData.length,
+    list: res.data.data,
+    total: res.data.data.length,
   };
 };
 

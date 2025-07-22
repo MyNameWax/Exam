@@ -21,7 +21,7 @@ class ExamBackendApplicationTests {
     void generatorExamineeNumber() {
         CandidateInfo info = new CandidateInfo(ExamType.REGULAR, 2025);
         String number = candidateNumberService.generateNumber(info);
-        System.out.println("考生号:" + number);  // 1250002265907207
+        System.out.println("考生号:" + number);  // 1250076971550728
     }
 
     /**
@@ -29,9 +29,9 @@ class ExamBackendApplicationTests {
      */
     @Test
     void generatorExamineeCheckCode() {
-        String candidateId = "1250002265907207";
+        String candidateId = "1250076971550728";
         String loginKey = SimpleKeyGenerator.generateLoginKey(candidateId);
-        System.out.println("生成的登录密钥: " + loginKey);  //rXOIM1TSGjRgZ36fB9wfrA==:DyZGKB8QGkUF67hTYAemh/W68p+70fFMA1jdbjHb5NA=
+        System.out.println("生成的登录密钥: " + loginKey);  //rgr4l6quyyp/JyFWY6Utqw==:Q34ZIhJmUDKLTjYLkn79htyqHgkFpXutkPHC9ejFKAY=
     }
 
     /**

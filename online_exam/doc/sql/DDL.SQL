@@ -16,3 +16,24 @@ CREATE TABLE exam_user
     `del_flag`        TINYINT                 NOT NULL DEFAULT '0' COMMENT '是否删除(0: 未删除 1:已删除)'
 ) COMMENT '考生表';
 
+CREATE TABLE `exam`
+(
+    `id`          VARCHAR(36)  NOT NULL COMMENT '考试ID',
+    `title`       varchar(100) NOT NULL COMMENT '考试标题',
+    `description` text COMMENT '考试描述',
+    `type`        varchar(10)           DEFAULT 'normal' COMMENT '考试类型',
+    `start_time`  datetime     NOT NULL COMMENT '开始时间',
+    `end_time`    datetime     NOT NULL COMMENT '结束时间',
+    `duration`    int          NOT NULL COMMENT '考试时长(分钟)',
+    `total_score` double NOT NULL COMMENT '总分',
+    `pass_score` double DEFAULT NULL COMMENT '及格分数',
+    `status`      tinyint               DEFAULT '0' COMMENT '状态(0-未开始,1-可参加,2-已完成,3已过期)',
+    `create_by`   BIGINT       NOT NULL COMMENT '创建人',
+    `create_time` DATETIME     NOT NULL COMMENT '创建时间',
+    `update_by`   BIGINT       NOT NULL COMMENT '修改人',
+    `update_time` DATETIME     NOT NULL COMMENT '修改时间',
+    `del_flag`    TINYINT      NOT NULL DEFAULT '0' COMMENT '是否删除(0: 未删除 1:已删除)',
+    PRIMARY KEY (`id`),
+    KEY           `idx_time` (`create_time`,`update_time`),
+    KEY           `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='考试信息表';
