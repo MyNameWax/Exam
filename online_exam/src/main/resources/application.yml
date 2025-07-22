@@ -1,0 +1,28 @@
+server:
+  port: 8088
+spring:
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      write_dates_as_timestamps: false
+  profiles:
+    active: druid
+  mvc:
+    servlet:
+      path: /
+  application:
+    name: exam
+jwt:
+  secret: cereshuzhitingnizhenbangcereshuzhitingnizhenbang
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+mybatis-plus:
+  global-config:
+    db-config:
+      logic-delete-field: delFlag
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

@@ -1,0 +1,46 @@
+package cn.rzpt;
+
+import cn.rzpt.enums.ExamType;
+import cn.rzpt.model.bo.CandidateInfo;
+import cn.rzpt.service.CandidateNumberService;
+import cn.rzpt.util.SimpleKeyGenerator;
+import jakarta.annotation.Resource;
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class ExamBackendApplicationTests {
+
+    @Resource
+    private CandidateNumberService candidateNumberService;
+
+    /**
+     * 生成考生号
+     */
+    @Test
+    void generatorExamineeNumber() {
+        CandidateInfo info = new CandidateInfo(ExamType.REGULAR, 2025);
+        String number = candidateNumberService.generateNumber(info);
+        System.out.println("考生号:" + number);  // 1250002265907207
+    }
+
+    /**
+     * 生成校验码
+     */
+    @Test
+    void generatorExamineeCheckCode() {
+        String candidateId = "1250002265907207";
+        String loginKey = SimpleKeyGenerator.generateLoginKey(candidateId);
+        System.out.println("生成的登录密钥: " + loginKey);  //rXOIM1TSGjRgZ36fB9wfrA==:DyZGKB8QGkUF67hTYAemh/W68p+70fFMA1jdbjHb5NA=
+    }
+
+    /**
+     * 验证考生号和校验码是否正确
+     */
+    @Test
+    void validateExamineeNumber() {
+        boolean isValid = SimpleKeyGenerator.validateLoginKey("1250002265907207", "rXOIM1TSGjRgZ36fB9wfrA==:DyZGKB8QGkUF67hTYAemh/W68p+70fFMA1jdbjHb5NA=");
+        System.out.println("密钥验证结果: " + isValid); //true
+    }
+
+}

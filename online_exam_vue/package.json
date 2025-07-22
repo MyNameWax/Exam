@@ -1,0 +1,22 @@
+{
+  "name": "online_exam_vue",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+    "install": "npm install"
+  },
+  "dependencies": {
+    "ant-design-vue": "^4.0.0-rc.6",
+    "axios": "^1.10.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.3",
+    "vite": "^6.3.5"
+  }
+}
