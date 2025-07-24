@@ -47,8 +47,8 @@ CREATE TABLE `exam_question`
     `content`       text        NOT NULL COMMENT '题目内容',
     `options`       text COMMENT '选项(JSON格式)',
     `answer`        text        NOT NULL COMMENT '正确答案',
-    `score`         DOUBLE         NOT NULL COMMENT '题目分值',
-    `sort`          DOUBLE                  DEFAULT '0' COMMENT '排序',
+    `score` DOUBLE NOT NULL COMMENT '题目分值',
+    `sort` DOUBLE DEFAULT '0' COMMENT '排序',
     `create_by`     VARCHAR(36) NOT NULL COMMENT '创建人',
     `create_time`   DATETIME    NOT NULL COMMENT '创建时间',
     `update_by`     VARCHAR(36) NOT NULL COMMENT '修改人',
@@ -57,3 +57,42 @@ CREATE TABLE `exam_question`
     PRIMARY KEY (`id`),
     KEY             `idx_exam_id` ( `exam_id` )
 ) ENGINE = INNODB DEFAULT CHARSET = utf8mb4 COMMENT = '考试题目表';
+
+CREATE TABLE `examinee_exam`
+(
+    `id`          VARCHAR(36) NOT NULL COMMENT '记录ID',
+    `examinee_id` VARCHAR(36) NOT NULL COMMENT '考生ID',
+    `exam_id`     VARCHAR(36) NOT NULL COMMENT '考试ID',
+    `start_time`  datetime             DEFAULT NULL COMMENT '开始考试时间',
+    `submit_time` datetime             DEFAULT NULL COMMENT '提交时间',
+    `score` DOUBLE DEFAULT NULL COMMENT '得分',
+    `status`      tinyint              DEFAULT '0' COMMENT '状态(0-未开始,1-进行中,2-已完成,3-已过期)',
+    `progress`    int                  DEFAULT '0' COMMENT '完成进度(%)',
+    `answers`     text COMMENT '考生答案(JSON格式)',
+    `create_by`   VARCHAR(36) NOT NULL COMMENT '创建人',
+    `create_time` DATETIME    NOT NULL COMMENT '创建时间',
+    `update_by`   VARCHAR(36) NOT NULL COMMENT '修改人',
+    `update_time` DATETIME    NOT NULL COMMENT '修改时间',
+    `del_flag`    TINYINT     NOT NULL DEFAULT '0' COMMENT '是否删除(0: 未删除 1:已删除)',
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='考生考试记录表';
+
+
+
+CREATE TABLE `exam_score`
+(
+    `id`           VARCHAR(36) NOT NULL COMMENT '成绩ID',
+    `examinee_id`  VARCHAR(36) NOT NULL COMMENT '考生ID',
+    `exam_id`      VARCHAR(36) NOT NULL COMMENT '考试ID',
+    `total_score` DOUBLE NOT NULL COMMENT '总分',
+    `actual_score` DOUBLE NOT NULL COMMENT '实际得分',
+    `score_detail` text COMMENT '得分详情(JSON格式)',
+    `ranking`      int                  DEFAULT NULL COMMENT '排名',
+    `comment`      varchar(255)         DEFAULT NULL COMMENT '评语',
+    `create_by`    VARCHAR(36) NOT NULL COMMENT '创建人',
+    `create_time`  DATETIME    NOT NULL COMMENT '创建时间',
+    `update_by`    VARCHAR(36) NOT NULL COMMENT '修改人',
+    `update_time`  DATETIME    NOT NULL COMMENT '修改时间',
+    `del_flag`     TINYINT     NOT NULL DEFAULT '0' COMMENT '是否删除(0: 未删除 1:已删除)',
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='考试成绩表';

@@ -37,7 +37,6 @@ public class ExamController {
     @Parameters({
             @Parameter(name = "status", description = "状态",required = true),
     })
-    @PassLogin
     public DataResult<List<ExamUserListResponse>> examUserList(@RequestParam(value = "status",required = false)String status) {
         return DataResult.success(examService.examUserList(status));
     }

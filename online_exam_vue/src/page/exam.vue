@@ -35,9 +35,8 @@
           </div>
           <div class="question-title" v-html="currentQuestion.title"></div>
           <div class="question-content" v-html="currentQuestion.content"></div>
-
           <!-- 单选题 -->
-          <div v-if="currentQuestion.type === '1'" class="question-options">
+          <div v-if="currentQuestion.type == '1'" class="question-options">
             <a-radio-group
                 v-model:value="currentQuestion.userAnswer[0]"
                 :options="currentQuestion.options"
@@ -45,7 +44,6 @@
                 button-style="solid"
             />
           </div>
-
           <!-- 多选题 -->
           <div v-if="currentQuestion.type === '2'" class="question-options">
             <a-checkbox-group
@@ -70,21 +68,18 @@
                 button-style="solid"
             />
           </div>
-
           <!-- 填空题 -->
-          <div v-if="currentQuestion.type === '5'" class="question-fill">
-            <div v-for="(blank, index) in currentQuestion.blanks" :key="index" class="fill-blank-item">
-              <p>{{ blank.label }}</p>
-              <a-input
-                  v-model:value="currentQuestion.userAnswer[index]"
-                  :placeholder="'请输入答案'"
-                  allow-clear
-              />
-            </div>
+          <div v-if="currentQuestion.type === '4'" class="question-fill">
+
+            <a-input
+                v-model:value="currentQuestion.userAnswer[0]"
+                :placeholder="'请输入答案'"
+                allow-clear
+            />
           </div>
 
           <!-- 简答题 -->
-          <div v-if="currentQuestion.type === '4'" class="question-essay">
+          <div v-if="currentQuestion.type === '5'" class="question-essay">
             <a-textarea
                 v-model:value="currentQuestion.userAnswer[0]"
                 placeholder="请输入详细回答"
@@ -119,7 +114,7 @@
 
         <!-- 加载状态 -->
         <div v-else class="loading-state">
-          <a-spin size="large" tip="加载题目中..." />
+          <a-spin size="large" tip="加载题目中..."/>
         </div>
       </div>
 
@@ -128,7 +123,9 @@
         <div class="card-header">
           <h3>答题卡</h3>
           <div class="card-stats">
-            <span>已答: {{ answeredCount }}/{{ examInfo.questions.length }}</span>
+            <span
+            >已答: {{ answeredCount }}/{{ examInfo.questions.length }}</span
+            >
             <span>标记: {{ markedCount }}</span>
           </div>
         </div>
@@ -178,16 +175,18 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { message, Modal } from "ant-design-vue";
-import axios from "axios";
+import {computed, getCurrentInstance, onMounted, reactive, ref} from "vue";
+import {useRoute, useRouter} from "vue-router";
+import {message, Modal} from "ant-design-vue";
 
+const {proxy} = getCurrentInstance();
+const API = proxy.$API;
 const router = useRouter();
+const route = useRoute()
 
 // 考试信息
 const examInfo = reactive({
-  title: "25-26年JavaWeb期末考试试题",
+  title: "",
   duration: 30, // 分钟
   questions: [],
   startTime: new Date().getTime(),
@@ -213,39 +212,45 @@ const formatQuestions = (apiData) => {
     const formattedQuestion = {
       id: item.questionId.toString(),
       type: item.type.toString(),
-      title: item.questionTitle,
-      content: item.questionContent,
+      title: `${item.title}`,
+      content: "",
       score: item.score,
       userAnswer: [], // 初始化为空数组
+      choiceAnswer: [],
+      judgmentAnswer: [],
+      fillAnswer: [],
+      essayAnswer: [],
       marked: false,
-      options: [],
-      blanks: []
+      options: item.options,
+      blanks: [],
     };
 
     // 处理选项数据
     if (item.option && item.option.length > 0) {
-      if (item.type === 3) { // 判断题
+      if (item.type === 3) {
+        // 判断题
         formattedQuestion.options = [
-          { label: '正确', value: 'true' },
-          { label: '错误', value: 'false' }
+          {label: "正确", value: "true"},
+          {label: "错误", value: "false"},
         ];
-      } else if (item.type === 1 || item.type === 2) { // 单选或多选
+      } else if (item.type === 1 || item.type === 2) {
+        // 单选或多选
         formattedQuestion.options = item.option.map((opt, i) => {
           const value = String.fromCharCode(65 + i);
           const label = opt;
-          return { label, value };
+          return {label, value};
         });
       }
     }
 
     // 处理填空题
     if (item.type === 5) {
-      const blankLabels = item.questionTitle.match(/_{3,}/g) || [];
+      const blankLabels = item.title.match(/_{3,}/g) || [];
       formattedQuestion.blanks = blankLabels.map((_, i) => ({
         label: `填空 ${i + 1}:`,
-        placeholder: item.option?.[i] || '请输入答案'
+        placeholder: item.option?.[i] || "请输入答案",
       }));
-      formattedQuestion.userAnswer = Array(blankLabels.length).fill('');
+      formattedQuestion.userAnswer = Array(blankLabels.length).fill("");
     }
 
     return formattedQuestion;
@@ -254,11 +259,11 @@ const formatQuestions = (apiData) => {
 // 获取题目类型文本
 const getQuestionTypeText = (type) => {
   const typeMap = {
-    '1': "单选",
-    '2': "多选",
-    '3': "判断",
-    '5': "填空",
-    '4': "简答",
+    1: "单选",
+    2: "多选",
+    3: "判断",
+    5: "填空",
+    4: "简答",
   };
   return typeMap[type] || "未知";
 };
@@ -266,11 +271,11 @@ const getQuestionTypeText = (type) => {
 // 获取题目标签颜色
 const getQuestionTagColor = (type) => {
   const colorMap = {
-    '1': "blue",
-    '2': "purple",
-    '3': "orange",
-    '5': "green",
-    '4': "red",
+    1: "blue",
+    2: "purple",
+    3: "orange",
+    5: "green",
+    4: "red",
   };
   return colorMap[type] || "gray";
 };
@@ -293,16 +298,18 @@ const markedCount = computed(() => {
 });
 
 // 初始化考试
-const initExam = async () => {
+const initExam = () => {
   try {
-    const response = await axios.get("http://localhost/question/bank/list?id=1938530641965023234");
-    examInfo.questions = formatQuestions(response.data);
+    API.exam.examDetailList(examId.value).then(res => {
+      examInfo.title = res.data.data.title;
+      examInfo.duration = res.data.data.duration;
+      examInfo.questions = formatQuestions(res.data.data.questions);
+      countdownTime.value = examInfo.startTime + examInfo.duration * 60 * 1000;
+    })
 
-    // 设置倒计时时间（当前时间 + 考试时长）
-    countdownTime.value = examInfo.startTime + examInfo.duration * 60 * 1000;
   } catch (error) {
-    console.error('获取考试题目失败:', error);
-    message.error('获取考试题目失败，请稍后重试');
+    console.error("获取考试题目失败:", error);
+    message.error("获取考试题目失败，请稍后重试");
   }
 };
 
@@ -340,31 +347,48 @@ const showSubmitConfirm = () => {
 // 处理提交考试
 const handleSubmitExam = () => {
   submitModalVisible.value = false;
-
-  // 准备提交数据
-  const submissionData = examInfo.questions.map(question => ({
-    questionId: question.id,
-    type: question.type,
-    userAnswer: question.userAnswer || []
-  }));
-
-  console.log("提交数据:", submissionData);
-
-  axios.post("http://localhost/question/bank/decide", submissionData).then(res => {
-    console.log("提交结果:", res);
+  console.log(examInfo,"你好")
+  const submitData = {
+    id: recordId.value,
+    examId: examId.value,
+    answers: examInfo.questions.map(item => ({
+      questionId: item.id,
+      type: parseInt(item.type),
+      userAnswer: item.userAnswer,
+    }))
+  }
+  API.exam.submitExamInfo(submitData).then(res => {
+    console.log("考试结果响应", res)
     Modal.success({
       title: "提交成功",
-      content: "您的试卷已成功提交，系统正在批改中。",
-      okText: "查看结果",
+      content: "您的试卷已成功提交,系统正在批改",
+      okText: "确定",
       onOk: () => {
-        router.push('/result');
-      },
-    });
-  }).catch(error => {
-    console.error("提交失败:", error);
-    message.error("提交试卷失败，请稍后重试");
-  });
-};
+        router.push("/")
+      }
+    })
+  })
+}
+
+
+//   axios
+//       .post("http://localhost/question/bank/decide", submissionData)
+//       .then((res) => {
+//         console.log("提交结果:", res);
+//         Modal.success({
+//           title: "提交成功",
+//           content: "您的试卷已成功提交，系统正在批改中。",
+//           okText: "查看结果",
+//           onOk: () => {
+//             router.push("/result");
+//           },
+//         });
+//       })
+//       .catch((error) => {
+//         console.error("提交失败:", error);
+//         message.error("提交试卷失败，请稍后重试");
+//       });
+// };
 
 // 处理时间到
 const handleTimeUp = () => {
@@ -405,8 +429,12 @@ const updateCountdownColor = () => {
   }
 };
 
+const examId = ref("")
+const recordId = ref("")
 // 组件挂载时初始化
 onMounted(() => {
+  examId.value = route.query.examId
+  recordId.value = route.query.recordId
   initExam();
   // 每分钟更新一次倒计时颜色
   setInterval(updateCountdownColor, 60 * 1000);
@@ -588,6 +616,7 @@ onMounted(() => {
 .card-footer {
   margin-top: auto;
 }
+
 /* 新增填空题样式 */
 .fill-blank-item {
   margin-bottom: 16px;

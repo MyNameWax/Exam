@@ -12,6 +12,8 @@ spring:
       path: /
   application:
     name: exam
+  main:
+    allow-circular-references: true
 jwt:
   exam:
     secret: cereshuzhitingnizhenbangcereshuzhitingnizhenbang

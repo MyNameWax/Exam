@@ -1,29 +1,33 @@
 package cn.rzpt.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import cn.rzpt.common.context.BaseContext;
 import cn.rzpt.enums.ExamStatus;
 import cn.rzpt.mapper.ExamMapper;
 import cn.rzpt.model.po.Exam;
 import cn.rzpt.model.po.ExamQuestion;
+import cn.rzpt.model.po.ExamineeExam;
 import cn.rzpt.model.request.ExamAddRequest;
 import cn.rzpt.model.response.ExamUserListResponse;
 import cn.rzpt.service.ExamQuestionService;
 import cn.rzpt.service.ExamService;
+import cn.rzpt.service.ExamineeExamService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import lombok.AllArgsConstructor;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Random;
 
 @Slf4j
 @Service
-@AllArgsConstructor
 public class ExamServiceImpl extends ServiceImpl<ExamMapper, Exam> implements ExamService {
 
+    @Resource
     private ExamQuestionService examQuestionService;
+    @Resource
+    private ExamineeExamService examineeExamService;
 
     @Override
     public Boolean addExam(ExamAddRequest examAddRequest) {
@@ -36,6 +40,7 @@ public class ExamServiceImpl extends ServiceImpl<ExamMapper, Exam> implements Ex
 
     @Override
     public List<ExamUserListResponse> examUserList(String status) {
+        String currentLoginUserId = BaseContext.getCurrentId();
         List<Exam> list = lambdaQuery()
                 .eq(StrUtil.isNotBlank(status), Exam::getStatus, status)
                 .orderByDesc(Exam::getCreateTime)
@@ -45,9 +50,13 @@ public class ExamServiceImpl extends ServiceImpl<ExamMapper, Exam> implements Ex
             BeanUtils.copyProperties(exam, examUserListResponse);
             examUserListResponse.setExamTime(exam.getStartTime());
             examUserListResponse.setIsNew(list.indexOf(exam) < 3);
-            //TODO  这个考试应该多少人考、已经考了多少人
-            Random random = new Random();
-            examUserListResponse.setProgress(random.nextInt(100) + 1);
+            ExamineeExam examineeExam = examineeExamService.lambdaQuery().eq(ExamineeExam::getExamId, exam.getId())
+                    .eq(ExamineeExam::getExamineeId, currentLoginUserId).one();
+            if (examineeExam != null) {
+                examUserListResponse.setProgress(examineeExam.getProgress());
+            }else {
+                examUserListResponse.setProgress(0);
+            }
             return examUserListResponse;
         }).toList();
         return returnList;

@@ -51,3 +51,67 @@ if (SimpleKeyGenerator.validateLoginKey(inputId, storedKey)) {
         // 登录失败
         }
 ```
+
+新增选择题
+```json
+{
+  "examId": "1947624368519331842",
+  "questionType": 1,
+  "content": "Java语言的特点不包括以下哪项？",
+  "options": [
+    {"value": "A", "label": "面向对象"},
+    {"value": "B", "label": "平台无关性"},
+    {"value": "C", "label": "指针操作"},
+    {"value": "D", "label": "自动内存管理"}
+  ],
+  "referenceAnswer": "C",
+  "score": 5,
+  "sort": 1
+}
+
+{
+  "examId": "1947624368519331842",
+  "questionType": 2,
+  "content": "以下哪些是Java的基本数据类型？",
+  "options": [
+    {"value": "A", "label": "int"},
+    {"value": "B", "label": "String"},
+    {"value": "C", "label": "boolean"},
+    {"value": "D", "label": "float"}
+  ],
+  "referenceAnswer": "A,C,D",
+  "score": 5,
+  "sort": 2
+}
+
+{
+  "examId": "exam123",
+  "questionType": 3,
+  "content": "Java是一种编译型语言",
+  "correctAnswer": true,
+  "score": 2,
+  "sort": 3,
+  "createBy": "user123"
+}
+
+{
+  "examId": "exam123",
+  "questionType": 4,
+  "content": "Java中用于表示单精度浮点数的关键字是____",
+  "referenceAnswer": "float",
+  "score": 3,
+  "sort": 4,
+  "createBy": "user123"
+}
+
+{
+  "examId": "exam123",
+  "questionType": 5,
+  "content": "简述Java的多态性及其实现方式",
+  "referenceAnswer": "多态是指同一个行为具有多个不同表现形式...",
+  "score": 10,
+  "sort": 5,
+  "createBy": "user123"
+}
+
+```

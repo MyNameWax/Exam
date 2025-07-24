@@ -55,7 +55,7 @@ public class ExamQuestionAddRequest {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class QuestionOption {
-        private String key;
+        private String label;
         private String value;
     }
 

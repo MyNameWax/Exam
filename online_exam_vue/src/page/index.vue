@@ -375,10 +375,16 @@ const handleStartExam = (exam) => {
 
   if (exam.status === 1) {
     message.info(`准备开始考试: ${exam.title}`);
-    // 这里应该是跳转到考试页面的逻辑
-    router.push({
-      path: "/exam",
-    });
+    API.exam.startExam(exam.id).then(res => {
+      router.push({
+        path: "/exam",
+        query: {
+          examId: exam.id,
+          recordId: res.data.data
+        }
+      });
+    })
+
   } else if (exam.status === 2) {
     message.info(`查看考试结果: ${exam.title}`);
   }
