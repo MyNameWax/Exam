@@ -2,27 +2,28 @@ package cn.rzpt.service.impl;
 
 import cn.rzpt.common.context.BaseContext;
 import cn.rzpt.common.global.result.DataResultCodeEnum;
+import cn.rzpt.constants.SystemConstants;
+import cn.rzpt.enums.ExamUserType;
 import cn.rzpt.enums.ExamineeExamStatus;
 import cn.rzpt.enums.QuestionType;
 import cn.rzpt.mapper.ExamineeExamMapper;
 import cn.rzpt.model.po.Exam;
 import cn.rzpt.model.po.ExamQuestion;
+import cn.rzpt.model.po.ExamUser;
 import cn.rzpt.model.po.ExamineeExam;
 import cn.rzpt.model.request.ExamSubmitRequest;
-import cn.rzpt.model.response.BlankVO;
-import cn.rzpt.model.response.ExamDetailVO;
-import cn.rzpt.model.response.QuestionOption;
-import cn.rzpt.model.response.QuestionVO;
+import cn.rzpt.model.response.*;
 import cn.rzpt.service.ExamQuestionService;
 import cn.rzpt.service.ExamService;
+import cn.rzpt.service.ExamUserService;
 import cn.rzpt.service.ExamineeExamService;
 import cn.rzpt.util.ThrowUtil;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -39,6 +40,10 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
     private ExamService examService;
     @Resource
     private ExamQuestionService examQuestionService;
+    @Resource
+    private ExamineeExamService examineeExamService;
+    @Resource
+    private ExamUserService examUserService;
 
     private final static Gson gson = new Gson();
 
@@ -53,17 +58,18 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
         examineeExam.setProgress(0);
         examineeExam.setStatus(ExamineeExamStatus.ONGOING.getCode());
         this.save(examineeExam);
-        this.scheduleProgressUpdate(exam,examineeExam);
+        this.scheduleProgressUpdate(exam, examineeExam);
         return examineeExam.getId();
 
     }
-    private void scheduleProgressUpdate(Exam exam,ExamineeExam examineeExam) {
+
+    private void scheduleProgressUpdate(Exam exam, ExamineeExam examineeExam) {
         LocalDateTime systemTime = LocalDateTime.now();
         LocalDateTime startTime = exam.getStartTime();
         // 系统时间 - 开始时间 转换为分钟
         long minutes = systemTime.until(startTime, java.time.temporal.ChronoUnit.MINUTES);
         Double progress = ((minutes * 1.0D) / exam.getDuration());
-        examineeExam.setProgress(Math.min((int)(progress * 100), 100));
+        examineeExam.setProgress(Math.min((int) (progress * 100), 100));
         this.updateById(examineeExam);
     }
 
@@ -93,13 +99,13 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
                 answerValue = gson.toJson(answer.getUserAnswer());
             }
             if (answer.getType().equals(QuestionType.JUDGE.getCode())) {
-                answerValue = answer.getJudgmentAnswer() ? "正确" : "错误";
+                answerValue = gson.toJson(answer.getUserAnswer());
             }
             if (answer.getType().equals(QuestionType.FILL.getCode())) {
-                answerValue = answer.getFillAnswer();
+                answerValue = gson.toJson(answer.getUserAnswer());
             }
             if (answer.getType().equals(QuestionType.ESSAY.getCode())) {
-                answerValue = answer.getEssayAnswer();
+                answerValue = gson.toJson(answer.getUserAnswer());
             }
             answerMap.put(answer.getQuestionId(), answerValue);
             // 计算得分
@@ -112,7 +118,6 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
         examineeExam.setProgress(100);
         examineeExam.setScore(totalScore);
         examineeExam.setAnswers(gson.toJson(answerMap));
-
         this.updateById(examineeExam);
 
         return true;
@@ -134,6 +139,30 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
         return examDetailVO;
     }
 
+    @Override
+    public ExamScoreResponseVO examineeExamResult(String examId) {
+        String currentLoginUserId = BaseContext.getCurrentId();
+        ExamUser examUser = examUserService.lambdaQuery().eq(ExamUser::getId, currentLoginUserId).one();
+        ExamineeExam examineeExam = examineeExamService.lambdaQuery().eq(ExamineeExam::getExamId, examId)
+                .eq(ExamineeExam::getExamineeId, currentLoginUserId).one();
+        ThrowUtil.throwIf(examineeExam == null ||
+                !examineeExam.getStatus().equals(ExamineeExamStatus.FINISH.getCode()) ||
+                examineeExam.getSubmitTime() == null, DataResultCodeEnum.REQUEST_ERROR);
+        ThrowUtil.throwIf(examineeExam.getScore() == null, DataResultCodeEnum.EXAM_SCORE_NOT_PUBLISHED);
+        LocalDateTime startTime = examineeExam.getStartTime();
+        LocalDateTime submitTime = examineeExam.getSubmitTime();
+        Integer type = examUser.getType();
+        String examineeName = examUser.getExamineeName();
+        String examineeNumber = examUser.getExamineeNumber();
+        return ExamScoreResponseVO.builder()
+                .typeEnumsLabel(ExamUserType.getByCode( type ))
+                .examUserName(examineeName)
+                .score(Math.round(examineeExam.getScore() * 100) / 100.0D)
+                .examineeNumber(examineeNumber)
+                .minutes( startTime.until(submitTime, java.time.temporal.ChronoUnit.MINUTES) )
+                .build();
+
+    }
 
 
     private List<QuestionVO> convertQuestions(List<ExamQuestion> questions) {
@@ -144,11 +173,10 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
             vo.setType(q.getQuestionType());
             vo.setContent(q.getContent());
             vo.setScore(q.getScore());
-
             if (q.getOptions() != null) {
-                vo.setOptions(gson.fromJson(q.getOptions(), new TypeToken<List<QuestionOption>>(){}.getType()));
+                vo.setOptions(gson.fromJson(q.getOptions(), new TypeToken<List<QuestionOption>>() {
+                }.getType()));
             }
-
             if (q.getQuestionType() == QuestionType.FILL.getCode()) {
                 vo.setBlanks(extractBlanks(q.getContent()));
             }
@@ -166,7 +194,6 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
         while (matcher.find()) {
             blanks.add(new BlankVO(index++, "填空" + index));
         }
-
         return blanks;
     }
 
@@ -176,27 +203,36 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
     private Double calculateQuestionScore(ExamQuestion question, String answerValue) {
         Integer questionType = question.getQuestionType();
         if (questionType.equals(QuestionType.SINGLE.getCode()) || questionType.equals(QuestionType.JUDGE.getCode())) {
-            return question.getAnswer().equals(answerValue) ? question.getScore() : 0.0D;
+            List answerList = gson.fromJson(answerValue, List.class);
+            if (questionType.equals(QuestionType.JUDGE.getCode())) {
+                String compareFlag = Boolean.parseBoolean(answerList.get(0).toString()) ? "正确" : "错误";
+                return question.getAnswer().equals(compareFlag) ? question.getScore() : SystemConstants.DefaultScoreConstants.ZERO;
+            }
+            return question.getAnswer().equals(answerList.get(0)) ? question.getScore() : SystemConstants.DefaultScoreConstants.ZERO;
         }
         if (questionType.equals(QuestionType.MULTIPLE.getCode())) {
-            return this.handleMultipleQuestion(question, answerValue, 3);
+            return this.handleMultipleQuestion(question, answerValue, SystemConstants.ExamDifferentConstants.MIXED);
         }
         if (questionType.equals(QuestionType.FILL.getCode())) {
             return this.calculateFillBlankScore(question.getAnswer(), answerValue, question.getScore());
         }
         if (questionType.equals(QuestionType.ESSAY.getCode())) {
-            //TODO AI 评分参考（）
-            return 0.0D;
+            // TODO AI判卷
+            return SystemConstants.DefaultScoreConstants.ZERO;
         }
 
-        return 0.0D;
+        return SystemConstants.DefaultScoreConstants.ZERO;
     }
 
     /**
      * 填空题评分
      */
     private Double calculateFillBlankScore(String answer, String answerValue, Double score) {
-        return answerValue.trim().equals(answer.trim()) ? score : 0.0D;
+        List<String> questionAnswer = Arrays.asList(answer.split(","));  // 题目的答案
+        List<String> userAnswer = gson.fromJson(answerValue, List.class);
+        questionAnswer.sort(String::compareTo);
+        userAnswer.sort(String::compareTo);
+        return questionAnswer.equals(userAnswer) ? score : SystemConstants.DefaultScoreConstants.ZERO;
     }
 
     /**
@@ -206,23 +242,23 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
      */
     private Double handleMultipleQuestion(ExamQuestion question, String answerValue, int mode) {
         Set<String> correctAnswers = new HashSet<>(Arrays.asList(question.getAnswer().split(",")));
-        Set<String> userAnswers = new HashSet<>(Arrays.asList(answerValue.split(",")));
+        Set<String> userAnswerList = gson.fromJson(answerValue, Set.class);
         switch (mode) {
             case 1:  //严格模式必须全对
-                return userAnswers.equals(correctAnswers) ? question.getScore() : 0.0D;
+                return userAnswerList.equals(correctAnswers) ? question.getScore() : SystemConstants.DefaultScoreConstants.ZERO;
             case 2:  // 宽松模式 部分得分
-                long correctCount = userAnswers.stream().filter(correctAnswers::contains).count();
-                long wrongCount = userAnswers.size() - correctCount;
+                long correctCount = userAnswerList.stream().filter(correctAnswers::contains).count();
+                long wrongCount = userAnswerList.size() - correctCount;
                 double scorePerOption = question.getScore() / correctAnswers.size();
                 return Math.max(0, (correctCount - wrongCount) * scorePerOption);
 
             case 3:  // 混合模式（无错误答案的时候 按照比例给分
             default:
-                boolean hasWrongAnswer = userAnswers.stream().anyMatch(answer -> !correctAnswers.contains(answer));
+                boolean hasWrongAnswer = userAnswerList.stream().anyMatch(answer -> !correctAnswers.contains(answer));
                 if (hasWrongAnswer) {
-                    return 0.0D;
+                    return SystemConstants.DefaultScoreConstants.ZERO;
                 }
-                return (userAnswers.size() * question.getScore() / correctAnswers.size());
+                return (userAnswerList.size() * question.getScore() / correctAnswers.size());
         }
     }
 }

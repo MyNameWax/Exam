@@ -262,8 +262,8 @@ const getQuestionTypeText = (type) => {
     1: "单选",
     2: "多选",
     3: "判断",
-    5: "填空",
-    4: "简答",
+    4: "填空",
+    5: "简答",
   };
   return typeMap[type] || "未知";
 };

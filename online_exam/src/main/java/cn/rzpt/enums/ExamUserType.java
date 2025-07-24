@@ -12,8 +12,17 @@ public enum ExamUserType {
     SPORTS(2, "体育类"),
     SPECIAL(3, "特殊政策");
 
-    private final int code;
+    private final Integer code;
     private final String desc;
 
+
+    public static String getByCode(int code) {
+        for (ExamUserType value : ExamUserType.values()) {
+            if (value.code == code) {
+                return value.getDesc();
+            }
+        }
+        return null;
+    }
 
 }

@@ -3,6 +3,7 @@ package cn.rzpt.controller;
 import cn.rzpt.common.global.result.DataResult;
 import cn.rzpt.model.request.ExamSubmitRequest;
 import cn.rzpt.model.response.ExamDetailVO;
+import cn.rzpt.model.response.ExamScoreResponseVO;
 import cn.rzpt.service.ExamineeExamService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +36,12 @@ public class ExamineeExamController {
     @Operation(summary = "提交答案")
     public DataResult<Boolean> submitAnswers(@RequestBody ExamSubmitRequest examSubmitRequest) {
         return DataResult.success(examineeExamService.submitAnswers(examSubmitRequest));
+    }
+
+    @GetMapping("/v1/examinee-exam/result")
+    @Operation(summary = "考试结果")
+    public DataResult<ExamScoreResponseVO> examineeExamResult(String examId) {
+        return DataResult.success(examineeExamService.examineeExamResult(examId));
     }
 
 }

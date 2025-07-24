@@ -57,6 +57,9 @@ public class ExamServiceImpl extends ServiceImpl<ExamMapper, Exam> implements Ex
             }else {
                 examUserListResponse.setProgress(0);
             }
+            if (exam.getStatus().equals(ExamStatus.CAN_JOIN.getCode()) && examineeExam != null) {
+                examUserListResponse.setStatus(ExamStatus.FINISH.getCode());
+            }
             return examUserListResponse;
         }).toList();
         return returnList;

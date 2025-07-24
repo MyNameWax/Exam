@@ -1,6 +1,7 @@
 package cn.rzpt;
 
 import cn.rzpt.enums.ExamType;
+import cn.rzpt.enums.ExamUserType;
 import cn.rzpt.model.bo.CandidateInfo;
 import cn.rzpt.service.CandidateNumberService;
 import cn.rzpt.util.SimpleKeyGenerator;
@@ -19,7 +20,7 @@ class ExamBackendApplicationTests {
      */
     @Test
     void generatorExamineeNumber() {
-        CandidateInfo info = new CandidateInfo(ExamType.REGULAR, 2025);
+        CandidateInfo info = new CandidateInfo(ExamUserType.ART, 2025);
         String number = candidateNumberService.generateNumber(info);
         System.out.println("考生号:" + number);  // 1250076971550728
     }
@@ -29,7 +30,7 @@ class ExamBackendApplicationTests {
      */
     @Test
     void generatorExamineeCheckCode() {
-        String candidateId = "1250076971550728";
+        String candidateId = "1250118830284809";
         String loginKey = SimpleKeyGenerator.generateLoginKey(candidateId);
         System.out.println("生成的登录密钥: " + loginKey);  //rgr4l6quyyp/JyFWY6Utqw==:Q34ZIhJmUDKLTjYLkn79htyqHgkFpXutkPHC9ejFKAY=
     }

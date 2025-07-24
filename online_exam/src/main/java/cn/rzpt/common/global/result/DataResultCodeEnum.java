@@ -17,7 +17,9 @@ public enum DataResultCodeEnum {
     USERNAME_PASSWORD_ERROR(402, "考生号或校验码错误"),
     USERNAME_NOT_ALLOW_EMPTY(403, "考生号不允许为空"),
     PASSWORD_NOT_ALLOW_EMPTY(404, "校验码不允许为空"),
-    PHONE_ERROR(405, "手机号格式错误");
+    PHONE_ERROR(405, "手机号格式错误"),
+    // 考试相关
+    EXAM_SCORE_NOT_PUBLISHED(501, "成绩未公布,请耐心等待");
 
     private final Integer code;
     private final String message;

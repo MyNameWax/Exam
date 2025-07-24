@@ -124,7 +124,7 @@
               <a-button
                   type="primary"
                   size="large"
-                  :disabled="item.status !== 1"
+                  :disabled="item.status !== 1 && item.status !== 2"
                   @click="handleStartExam(item)"
               >
                 {{ getActionText(item.status) }}
@@ -314,7 +314,7 @@ const getActionText = (status) => {
   const texts = {
     0: "未开始",
     1: "开始考试",
-    2: "查看结果",
+    2: "查看成绩",
     3: "已过期",
   };
   return texts[status] || "--";
