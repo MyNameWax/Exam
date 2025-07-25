@@ -9,6 +9,7 @@ import cn.rzpt.enums.ExamineeExamStatus;
 import cn.rzpt.enums.QuestionType;
 import cn.rzpt.mapper.ExamineeExamMapper;
 import cn.rzpt.model.bo.AiScoreBO;
+import cn.rzpt.model.bo.ScoreBO;
 import cn.rzpt.model.po.Exam;
 import cn.rzpt.model.po.ExamQuestion;
 import cn.rzpt.model.po.ExamUser;
@@ -25,8 +26,11 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import jakarta.annotation.Resource;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -48,6 +52,8 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
     private ExamUserService examUserService;
     @Resource
     private OpenAiChatModel chatModel;
+    @Resource
+    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     private final static Gson gson = new Gson();
 
@@ -87,7 +93,7 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
         List<ExamQuestion> questions = examQuestionService.lambdaQuery().eq(ExamQuestion::getExamId, examineeExam.getExamId())
                 .list();
 
-        Map<String, String> answerMap = new HashMap<>();
+        Map<String, ScoreBO> answerMap = new HashMap<>();
         Double totalScore = 0.0D;
 
         for (ExamSubmitRequest.QuestionAnswerDTO answer : examSubmitRequest.getAnswers()) {
@@ -107,10 +113,17 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
             if (answer.getType().equals(QuestionType.ESSAY.getCode())) {
                 answerValue = gson.toJson(answer.getUserAnswer());
             }
-            answerMap.put(answer.getQuestionId(), answerValue);
+            ScoreBO scoreBO = new ScoreBO();
+            scoreBO.setUserAnswer(answerValue);
             // 计算得分
-            Double questionScore = this.calculateQuestionScore(question, answerValue,examineeExam);
-            totalScore += questionScore;
+            if (answer.getType().equals(QuestionType.ESSAY.getCode())) {
+
+            }
+            AiScoreBO aiScoreBO = this.calculateQuestionScore(question, answerValue, examineeExam);
+            scoreBO.setScore(aiScoreBO.getScore());
+            totalScore += aiScoreBO.getScore();
+            scoreBO.setReason(aiScoreBO.getReason() == null ? "" : aiScoreBO.getReason());
+            answerMap.put(answer.getQuestionId(), scoreBO);
         }
         // 更新考试记录
         examineeExam.setStatus(ExamineeExamStatus.FINISH.getCode());
@@ -155,11 +168,11 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
         String examineeName = examUser.getExamineeName();
         String examineeNumber = examUser.getExamineeNumber();
         return ExamScoreResponseVO.builder()
-                .typeEnumsLabel(ExamUserType.getByCode( type ))
+                .typeEnumsLabel(ExamUserType.getByCode(type))
                 .examUserName(examineeName)
                 .score(Math.round(examineeExam.getScore() * 100) / 100.0D)
                 .examineeNumber(examineeNumber)
-                .minutes( startTime.until(submitTime, java.time.temporal.ChronoUnit.MINUTES) )
+                .minutes(startTime.until(submitTime, java.time.temporal.ChronoUnit.MINUTES))
                 .build();
 
     }
@@ -189,7 +202,6 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
         List<BlankVO> blanks = new ArrayList<>();
         Pattern pattern = Pattern.compile("_{3,}");
         Matcher matcher = pattern.matcher(content);
-
         int index = 1;
         while (matcher.find()) {
             blanks.add(new BlankVO(index++, "填空" + index));
@@ -200,39 +212,37 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
     /**
      * 判题
      */
-    private Double calculateQuestionScore(ExamQuestion question, String answerValue,ExamineeExam examineeExam) {
+    private AiScoreBO calculateQuestionScore(ExamQuestion question, String answerValue, ExamineeExam examineeExam) {
+        AiScoreBO aiScoreBO = new AiScoreBO();
         Integer questionType = question.getQuestionType();
         if (questionType.equals(QuestionType.SINGLE.getCode()) || questionType.equals(QuestionType.JUDGE.getCode())) {
             List answerList = gson.fromJson(answerValue, List.class);
             if (questionType.equals(QuestionType.JUDGE.getCode())) {
                 String compareFlag = Boolean.parseBoolean(answerList.get(0).toString()) ? "正确" : "错误";
-                return question.getAnswer().equals(compareFlag) ? question.getScore() : SystemConstants.DefaultScoreConstants.ZERO;
+                aiScoreBO.setScore(question.getAnswer().equals(compareFlag) ? question.getScore() : SystemConstants.DefaultScoreConstants.ZERO);
+                return aiScoreBO;
             }
-            return question.getAnswer().equals(answerList.get(0)) ? question.getScore() : SystemConstants.DefaultScoreConstants.ZERO;
+            aiScoreBO.setScore(question.getAnswer().equals(answerList.get(0)) ? question.getScore() : SystemConstants.DefaultScoreConstants.ZERO);
+            return aiScoreBO;
         }
         if (questionType.equals(QuestionType.MULTIPLE.getCode())) {
-            return this.handleMultipleQuestion(question, answerValue, SystemConstants.ExamDifferentConstants.MIXED);
+            return this.handleMultipleQuestion(aiScoreBO, question, answerValue, SystemConstants.ExamDifferentConstants.MIXED);
         }
         if (questionType.equals(QuestionType.FILL.getCode())) {
-            return this.calculateFillBlankScore(question.getAnswer(), answerValue, question.getScore());
+            return this.calculateFillBlankScore(aiScoreBO, question.getAnswer(), answerValue, question.getScore());
         }
         if (questionType.equals(QuestionType.ESSAY.getCode())) {
-            // TODO AI判卷
-            AiScoreBO aiScoreBO = this.calulateEaSayAnswer(question, answerValue);
-            Double score = aiScoreBO.getScore();  //AI阅卷的一个成绩
-            String reason = aiScoreBO.getReason(); // AI于阅卷的理由  || 方便判卷老师进行二次评分
-            examineeExam.setReason(reason);
-            return score;
+            aiScoreBO = this.calulateEaSayAnswer(question, answerValue);
+            return aiScoreBO;
         }
-
-        return SystemConstants.DefaultScoreConstants.ZERO;
+        aiScoreBO.setScore(SystemConstants.DefaultScoreConstants.ZERO);
+        return aiScoreBO;
     }
 
     /**
      * 简单题阅卷（AI阅卷）
      */
     private AiScoreBO calulateEaSayAnswer(ExamQuestion question, String answerValue) {
-
         String aiScoreMessage = SystemConstants.ExamMarkConstants.generatorMessage(
                 ExamMarkDifferentEnums.EASY.getDesc(),
                 question.getContent(),
@@ -249,12 +259,13 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
     /**
      * 填空题评分
      */
-    private Double calculateFillBlankScore(String answer, String answerValue, Double score) {
+    private AiScoreBO calculateFillBlankScore(AiScoreBO aiScoreBO, String answer, String answerValue, Double score) {
         List<String> questionAnswer = Arrays.asList(answer.split(","));  // 题目的答案
         List<String> userAnswer = gson.fromJson(answerValue, List.class);
         questionAnswer.sort(String::compareTo);
         userAnswer.sort(String::compareTo);
-        return questionAnswer.equals(userAnswer) ? score : SystemConstants.DefaultScoreConstants.ZERO;
+        aiScoreBO.setScore(questionAnswer.equals(userAnswer) ? score : SystemConstants.DefaultScoreConstants.ZERO);
+        return aiScoreBO;
     }
 
     /**
@@ -262,24 +273,33 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
      *
      * @param mode 评分模式： 1 - 严格模式 2 - 宽松模式 3 - 混合模式
      */
-    private Double handleMultipleQuestion(ExamQuestion question, String answerValue, int mode) {
+    private AiScoreBO handleMultipleQuestion(AiScoreBO scoreBO, ExamQuestion question, String answerValue, int mode) {
         Set<String> correctAnswers = new HashSet<>(Arrays.asList(question.getAnswer().split(",")));
         Set<String> userAnswerList = gson.fromJson(answerValue, Set.class);
         switch (mode) {
             case 1:  //严格模式必须全对
-                return userAnswerList.equals(correctAnswers) ? question.getScore() : SystemConstants.DefaultScoreConstants.ZERO;
+                scoreBO.setScore(userAnswerList.equals(correctAnswers) ? question.getScore() : SystemConstants.DefaultScoreConstants.ZERO);
+                return scoreBO;
             case 2:  // 宽松模式 部分得分
                 long correctCount = userAnswerList.stream().filter(correctAnswers::contains).count();
                 long wrongCount = userAnswerList.size() - correctCount;
                 double scorePerOption = question.getScore() / correctAnswers.size();
-                return Math.max(0, (correctCount - wrongCount) * scorePerOption);
+                double score = Math.max(0, (correctCount - wrongCount) * scorePerOption);
+                scoreBO.setScore(score);
+                return scoreBO;
             case 3:  // 混合模式（无错误答案的时候 按照比例给分
             default:
                 boolean hasWrongAnswer = userAnswerList.stream().anyMatch(answer -> !correctAnswers.contains(answer));
                 if (hasWrongAnswer) {
-                    return SystemConstants.DefaultScoreConstants.ZERO;
+                    scoreBO.setScore(SystemConstants.DefaultScoreConstants.ZERO);
+                    return scoreBO;
                 }
-                return (userAnswerList.size() * question.getScore() / correctAnswers.size());
+                List<String> questionAnswer = Arrays.asList(question.getAnswer().split(","));  // 题目的答案
+                List<String> userAnswer = gson.fromJson(answerValue, List.class);
+                questionAnswer.sort(String::compareTo);
+                userAnswer.sort(String::compareTo);
+                scoreBO.setScore(questionAnswer.equals(userAnswer) ? question.getScore() : SystemConstants.DefaultScoreConstants.ZERO);
+                return scoreBO;
         }
     }
 }

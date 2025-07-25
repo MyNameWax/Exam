@@ -2,22 +2,16 @@ package cn.rzpt;
 
 import cn.rzpt.constants.SystemConstants;
 import cn.rzpt.enums.ExamMarkDifferentEnums;
-import cn.rzpt.enums.ExamType;
 import cn.rzpt.enums.ExamUserType;
 import cn.rzpt.model.bo.AiScoreBO;
 import cn.rzpt.model.bo.CandidateInfo;
 import cn.rzpt.service.CandidateNumberService;
 import cn.rzpt.util.SimpleKeyGenerator;
 import com.google.gson.Gson;
-import dev.langchain4j.data.message.ChatMessage;
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import java.util.Map;
 
 @SpringBootTest
 class ExamBackendApplicationTests {
@@ -43,7 +37,7 @@ class ExamBackendApplicationTests {
      */
     @Test
     void generatorExamineeCheckCode() {
-        String candidateId = "1250118830284809";
+        String candidateId = "1250193674577921";
         String loginKey = SimpleKeyGenerator.generateLoginKey(candidateId);
         System.out.println("生成的登录密钥: " + loginKey);  //rgr4l6quyyp/JyFWY6Utqw==:Q34ZIhJmUDKLTjYLkn79htyqHgkFpXutkPHC9ejFKAY=
     }
@@ -53,7 +47,7 @@ class ExamBackendApplicationTests {
      */
     @Test
     void validateExamineeNumber() {
-        boolean isValid = SimpleKeyGenerator.validateLoginKey("1250002265907207", "mL/BAwcx29062tuQOwqBGw==:hUoEL8H9z0UktyJBl75n55aKb1kbfD33cv/Wsj42+eQ=");
+        boolean isValid = SimpleKeyGenerator.validateLoginKey("1250193674577921", "aP1fY0l/43zbetWLzy/0Q==:ruO5R+dRgQ56i7/phLR6baUjenflg3eIq3okYIIA3a4=");
         System.out.println("密钥验证结果: " + isValid); //true
     }
 
@@ -76,5 +70,6 @@ class ExamBackendApplicationTests {
         System.out.println("得分: " + score);
         System.out.println("原因: " + reason);
     }
+
 
 }
