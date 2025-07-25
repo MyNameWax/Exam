@@ -34,6 +34,21 @@ public interface SystemConstants {
 
     }
 
+    /**
+     * 阅卷相关
+     */
+    class ExamMarkConstants {
+
+
+        public static String generatorMessage(String type, String question, String answer,Double score) {
+            return String.format("您是一名%s阅卷老师,题目是:%s,答案是:%s,您需要根据这个题目给这个答案来进行评分,满分为:%f" +
+                            "您需要返回给JSON格式的数据,分别返回score分数和reason原因。其中分数的数据类型是double,原因请用中文来说明。"
+                    , type, question, answer,score);
+
+        }
+
+    }
+
 
     /**
      * 考试难度

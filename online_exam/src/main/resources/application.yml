@@ -33,3 +33,11 @@ mybatis-plus:
       logic-not-delete-value: 0
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+langchain4j:
+  open-ai:
+    chat-model:
+      api-key: sk-979ebca6edb2485eab69f8f09feb42c3
+      model-name: deepseek-chat
+      log-requests: true
+      log-responses: true
+      base-url: https://api.deepseek.com

@@ -1,19 +1,32 @@
 package cn.rzpt;
 
+import cn.rzpt.constants.SystemConstants;
+import cn.rzpt.enums.ExamMarkDifferentEnums;
 import cn.rzpt.enums.ExamType;
 import cn.rzpt.enums.ExamUserType;
+import cn.rzpt.model.bo.AiScoreBO;
 import cn.rzpt.model.bo.CandidateInfo;
 import cn.rzpt.service.CandidateNumberService;
 import cn.rzpt.util.SimpleKeyGenerator;
+import com.google.gson.Gson;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.openai.OpenAiChatModel;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.Map;
 
 @SpringBootTest
 class ExamBackendApplicationTests {
 
     @Resource
     private CandidateNumberService candidateNumberService;
+    @Resource
+    private OpenAiChatModel chatModel;
+    private final static Gson Gson = new Gson();
 
     /**
      * 生成考生号
@@ -42,6 +55,26 @@ class ExamBackendApplicationTests {
     void validateExamineeNumber() {
         boolean isValid = SimpleKeyGenerator.validateLoginKey("1250002265907207", "mL/BAwcx29062tuQOwqBGw==:hUoEL8H9z0UktyJBl75n55aKb1kbfD33cv/Wsj42+eQ=");
         System.out.println("密钥验证结果: " + isValid); //true
+    }
+
+    /**
+     * 测试AI是否好用
+     */
+    @Test
+    void aiTest() {
+        String aiScoreMessage = SystemConstants.ExamMarkConstants.generatorMessage(
+                ExamMarkDifferentEnums.EASY.getDesc(),
+                "简述Java的多态性及其实现方式",
+                "是面向对象特征之一",
+                10.0
+        );
+        String aiScoreReason = chatModel.generate(aiScoreMessage);
+        String aiScoreReasonClean = aiScoreReason.replaceAll("`", "").replaceAll("json", "");
+        AiScoreBO aiScoreBO = Gson.fromJson(aiScoreReasonClean, AiScoreBO.class);
+        Double score = aiScoreBO.getScore();
+        String reason = aiScoreBO.getReason();
+        System.out.println("得分: " + score);
+        System.out.println("原因: " + reason);
     }
 
 }

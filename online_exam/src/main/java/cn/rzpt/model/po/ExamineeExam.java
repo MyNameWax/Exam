@@ -50,6 +50,11 @@ public class ExamineeExam extends BasePO {
     private Double score;
 
     /**
+     * 得分原因
+     */
+    private String reason;
+
+    /**
      * 状态（0-未开始,1-进行中,2-已完成,3-已过期）
      */
     private Integer status;

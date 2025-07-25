@@ -3,10 +3,12 @@ package cn.rzpt.service.impl;
 import cn.rzpt.common.context.BaseContext;
 import cn.rzpt.common.global.result.DataResultCodeEnum;
 import cn.rzpt.constants.SystemConstants;
+import cn.rzpt.enums.ExamMarkDifferentEnums;
 import cn.rzpt.enums.ExamUserType;
 import cn.rzpt.enums.ExamineeExamStatus;
 import cn.rzpt.enums.QuestionType;
 import cn.rzpt.mapper.ExamineeExamMapper;
+import cn.rzpt.model.bo.AiScoreBO;
 import cn.rzpt.model.po.Exam;
 import cn.rzpt.model.po.ExamQuestion;
 import cn.rzpt.model.po.ExamUser;
@@ -21,9 +23,9 @@ import cn.rzpt.util.ThrowUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import dev.langchain4j.model.openai.OpenAiChatModel;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -44,6 +46,8 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
     private ExamineeExamService examineeExamService;
     @Resource
     private ExamUserService examUserService;
+    @Resource
+    private OpenAiChatModel chatModel;
 
     private final static Gson gson = new Gson();
 
@@ -82,10 +86,6 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
         // 获取考试题目
         List<ExamQuestion> questions = examQuestionService.lambdaQuery().eq(ExamQuestion::getExamId, examineeExam.getExamId())
                 .list();
-        // 验证答案完整性 (因为可能会被强制收卷)
-        // ThrowUtil.throwIf(examSubmitRequest.getAnswers().size() != questions.size(), DataResultCodeEnum.REQUEST_ERROR);
-
-        // 转换答案格式并计算分数
 
         Map<String, String> answerMap = new HashMap<>();
         Double totalScore = 0.0D;
@@ -109,7 +109,7 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
             }
             answerMap.put(answer.getQuestionId(), answerValue);
             // 计算得分
-            Double questionScore = this.calculateQuestionScore(question, answerValue);
+            Double questionScore = this.calculateQuestionScore(question, answerValue,examineeExam);
             totalScore += questionScore;
         }
         // 更新考试记录
@@ -200,7 +200,7 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
     /**
      * 判题
      */
-    private Double calculateQuestionScore(ExamQuestion question, String answerValue) {
+    private Double calculateQuestionScore(ExamQuestion question, String answerValue,ExamineeExam examineeExam) {
         Integer questionType = question.getQuestionType();
         if (questionType.equals(QuestionType.SINGLE.getCode()) || questionType.equals(QuestionType.JUDGE.getCode())) {
             List answerList = gson.fromJson(answerValue, List.class);
@@ -218,10 +218,32 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
         }
         if (questionType.equals(QuestionType.ESSAY.getCode())) {
             // TODO AI判卷
-            return SystemConstants.DefaultScoreConstants.ZERO;
+            AiScoreBO aiScoreBO = this.calulateEaSayAnswer(question, answerValue);
+            Double score = aiScoreBO.getScore();  //AI阅卷的一个成绩
+            String reason = aiScoreBO.getReason(); // AI于阅卷的理由  || 方便判卷老师进行二次评分
+            examineeExam.setReason(reason);
+            return score;
         }
 
         return SystemConstants.DefaultScoreConstants.ZERO;
+    }
+
+    /**
+     * 简单题阅卷（AI阅卷）
+     */
+    private AiScoreBO calulateEaSayAnswer(ExamQuestion question, String answerValue) {
+
+        String aiScoreMessage = SystemConstants.ExamMarkConstants.generatorMessage(
+                ExamMarkDifferentEnums.EASY.getDesc(),
+                question.getContent(),
+                answerValue,
+                question.getScore()
+        );
+        String aiScoreReason = chatModel.generate(aiScoreMessage);
+        // 数据清洗
+        String aiScoreReasonClean = aiScoreReason.replaceAll("`", "").replaceAll("json", "");
+        AiScoreBO aiScoreBO = gson.fromJson(aiScoreReasonClean, AiScoreBO.class);
+        return aiScoreBO;
     }
 
     /**
@@ -251,7 +273,6 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
                 long wrongCount = userAnswerList.size() - correctCount;
                 double scorePerOption = question.getScore() / correctAnswers.size();
                 return Math.max(0, (correctCount - wrongCount) * scorePerOption);
-
             case 3:  // 混合模式（无错误答案的时候 按照比例给分
             default:
                 boolean hasWrongAnswer = userAnswerList.stream().anyMatch(answer -> !correctAnswers.contains(answer));
