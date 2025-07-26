@@ -26,11 +26,9 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import jakarta.annotation.Resource;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -47,13 +45,9 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
     @Resource
     private ExamQuestionService examQuestionService;
     @Resource
-    private ExamineeExamService examineeExamService;
-    @Resource
     private ExamUserService examUserService;
     @Resource
     private OpenAiChatModel chatModel;
-    @Resource
-    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     private final static Gson gson = new Gson();
 
@@ -92,10 +86,17 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
         // 获取考试题目
         List<ExamQuestion> questions = examQuestionService.lambdaQuery().eq(ExamQuestion::getExamId, examineeExam.getExamId())
                 .list();
-
+        log.info("开始计算得分 -- :{}", examSubmitRequest.getExamId());
         Map<String, ScoreBO> answerMap = new HashMap<>();
-        Double totalScore = 0.0D;
-
+        Double totalScore = SystemConstants.DefaultScoreConstants.ZERO;
+        List<ExamSubmitRequest.QuestionAnswerDTO> answers = examSubmitRequest.getAnswers();
+        if (answers.isEmpty()) {
+            examineeExam.setStatus(ExamineeExamStatus.FINISH.getCode());
+            examineeExam.setSubmitTime(LocalDateTime.now());
+            examineeExam.setProgress(100);
+            examineeExam.setScore(SystemConstants.DefaultScoreConstants.ZERO);
+            this.updateById(examineeExam);
+        }
         for (ExamSubmitRequest.QuestionAnswerDTO answer : examSubmitRequest.getAnswers()) {
             ExamQuestion question = questions.stream().filter(q -> q.getId().equals(answer.getQuestionId())).findFirst().orElse(null);
             ThrowUtil.throwIf(question == null, DataResultCodeEnum.REQUEST_ERROR);
@@ -115,10 +116,6 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
             }
             ScoreBO scoreBO = new ScoreBO();
             scoreBO.setUserAnswer(answerValue);
-            // 计算得分
-            if (answer.getType().equals(QuestionType.ESSAY.getCode())) {
-
-            }
             AiScoreBO aiScoreBO = this.calculateQuestionScore(question, answerValue, examineeExam);
             scoreBO.setScore(aiScoreBO.getScore());
             totalScore += aiScoreBO.getScore();
@@ -132,7 +129,6 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
         examineeExam.setScore(totalScore);
         examineeExam.setAnswers(gson.toJson(answerMap));
         this.updateById(examineeExam);
-
         return true;
     }
 
@@ -156,7 +152,7 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
     public ExamScoreResponseVO examineeExamResult(String examId) {
         String currentLoginUserId = BaseContext.getCurrentId();
         ExamUser examUser = examUserService.lambdaQuery().eq(ExamUser::getId, currentLoginUserId).one();
-        ExamineeExam examineeExam = examineeExamService.lambdaQuery().eq(ExamineeExam::getExamId, examId)
+        ExamineeExam examineeExam = this.lambdaQuery().eq(ExamineeExam::getExamId, examId)
                 .eq(ExamineeExam::getExamineeId, currentLoginUserId).one();
         ThrowUtil.throwIf(examineeExam == null ||
                 !examineeExam.getStatus().equals(ExamineeExamStatus.FINISH.getCode()) ||
@@ -175,6 +171,17 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
                 .minutes(startTime.until(submitTime, java.time.temporal.ChronoUnit.MINUTES))
                 .build();
 
+    }
+
+    @Override
+    public Integer cheatPing(String examId) {
+        String currentLoginUserId = BaseContext.getCurrentId();
+        ExamineeExam examineeExam = this.lambdaQuery().eq(ExamineeExam::getExamId, examId)
+                .eq(ExamineeExam::getExamineeId, currentLoginUserId)
+                .one();
+        examineeExam.setCheatCount(examineeExam.getCheatCount() == null ? 1 : examineeExam.getCheatCount() + 1);
+        this.updateById(examineeExam);
+        return examineeExam.getCheatCount();
     }
 
 

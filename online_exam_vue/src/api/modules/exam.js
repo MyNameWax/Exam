@@ -9,6 +9,12 @@ export default {
             params
         })
     },
+    submitExamCheatPing(examId) {
+        return http({
+            url: `/examinee-exam/v1/cheat/ping?examId=${examId}`,
+            method: "get",
+        })
+    },
     startExam(id) {
         return http({
             url: `/examinee-exam/v1/${id}/start`,
@@ -27,6 +33,14 @@ export default {
             method: "post",
             data
         })
-    }
+    },
+    queryUserExamInfo(params) {
+        return http({
+            url: "/examinee-exam/v1/examinee-exam/result",
+            method: "get",
+            params
+        })
+    },
+
 
 }

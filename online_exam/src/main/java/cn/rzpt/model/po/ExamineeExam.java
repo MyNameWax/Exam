@@ -64,4 +64,9 @@ public class ExamineeExam extends BasePO {
      */
     private String answers;
 
+    /**
+     * 作弊次数
+     */
+    private Integer cheatCount;
+
 }

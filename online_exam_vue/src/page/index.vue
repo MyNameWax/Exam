@@ -348,7 +348,7 @@ const fetchExamList = async () => {
 };
 
 // 获取考试列表
-const queryExamList = async() => {
+const queryExamList = async () => {
   const res = await API.exam.examList()
   console.log(res)
   return {
@@ -387,6 +387,9 @@ const handleStartExam = (exam) => {
 
   } else if (exam.status === 2) {
     message.info(`查看考试结果: ${exam.title}`);
+    API.exam.queryUserExamInfo(exam.id).then(res => {
+      console.log(res, "rews")
+    })
   }
 };
 

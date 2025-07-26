@@ -4,6 +4,9 @@ package cn.rzpt.enums;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+/**
+ * 每年考试的相应加分政策
+ */
 @Getter
 @AllArgsConstructor
 public enum ExamUserType {

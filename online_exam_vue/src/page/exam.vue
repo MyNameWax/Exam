@@ -175,10 +175,12 @@
 </template>
 
 <script setup>
-import {computed, getCurrentInstance, onMounted, reactive, ref} from "vue";
+import {computed, getCurrentInstance, onMounted, reactive, ref, watch} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {message, Modal} from "ant-design-vue";
+import {useWindowFocusHook} from "../util/useWindowFocusHook.js"
 
+const {isWindowFocus} = useWindowFocusHook()
 const {proxy} = getCurrentInstance();
 const API = proxy.$API;
 const router = useRouter();
@@ -191,7 +193,26 @@ const examInfo = reactive({
   questions: [],
   startTime: new Date().getTime(),
 });
-
+watch(isWindowFocus,(newVal => {
+  if (!newVal) {
+    console.log("newVal", newVal)
+    API.exam.submitExamCheatPing(examId.value).then(res => {
+      const checkPingCount = res.data.data
+      if (checkPingCount === 1) {
+        // 第一次作弊 给用户提示
+        message.warn("检测到您作弊一次,给予警告,超过三次则强制收卷")
+      }
+      if (checkPingCount > 3) {
+        // 让他提交交卷。
+        message.warn("您已作弊超过三次,系统将为您强制收卷")
+        // 延迟1秒
+        setTimeout(() => {
+          handleSubmitExam()
+        },1000)
+      }
+    })
+  }
+}))
 // 当前题目索引
 const currentIndex = ref(0);
 // 倒计时时间
@@ -347,7 +368,6 @@ const showSubmitConfirm = () => {
 // 处理提交考试
 const handleSubmitExam = () => {
   submitModalVisible.value = false;
-  console.log(examInfo,"你好")
   const submitData = {
     id: recordId.value,
     examId: examId.value,
@@ -369,26 +389,6 @@ const handleSubmitExam = () => {
     })
   })
 }
-
-
-//   axios
-//       .post("http://localhost/question/bank/decide", submissionData)
-//       .then((res) => {
-//         console.log("提交结果:", res);
-//         Modal.success({
-//           title: "提交成功",
-//           content: "您的试卷已成功提交，系统正在批改中。",
-//           okText: "查看结果",
-//           onOk: () => {
-//             router.push("/result");
-//           },
-//         });
-//       })
-//       .catch((error) => {
-//         console.error("提交失败:", error);
-//         message.error("提交试卷失败，请稍后重试");
-//       });
-// };
 
 // 处理时间到
 const handleTimeUp = () => {
@@ -420,7 +420,6 @@ const handleBack = () => {
 const updateCountdownColor = () => {
   const remaining = countdownTime.value - new Date().getTime();
   const minutes = remaining / (60 * 1000);
-
   if (minutes < 10) {
     countdownColor.value = "#faad14"; // 黄色警告
   }

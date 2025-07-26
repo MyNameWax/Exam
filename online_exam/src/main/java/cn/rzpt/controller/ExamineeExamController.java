@@ -38,6 +38,12 @@ public class ExamineeExamController {
         return DataResult.success(examineeExamService.submitAnswers(examSubmitRequest));
     }
 
+    @GetMapping("/v1/cheat/ping")
+    @Operation(summary = "作弊检测")
+    public DataResult<Integer> cheatPing(String examId) {
+        return DataResult.success(examineeExamService.cheatPing(examId));
+    }
+
     @GetMapping("/v1/examinee-exam/result")
     @Operation(summary = "考试结果")
     public DataResult<ExamScoreResponseVO> examineeExamResult(String examId) {

@@ -27,4 +27,9 @@ public interface ExamineeExamService extends IService<ExamineeExam> {
      * 考生查看考试结果
      */
     ExamScoreResponseVO examineeExamResult(String examId);
+
+    /**
+     * 作弊校测
+     */
+    Integer cheatPing(String examId);
 }
