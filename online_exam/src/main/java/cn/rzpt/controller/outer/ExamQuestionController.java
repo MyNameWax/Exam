@@ -1,5 +1,5 @@
 
-package cn.rzpt.controller;
+package cn.rzpt.controller.outer;
 
 import cn.rzpt.common.global.result.DataResult;
 import cn.rzpt.model.po.ExamQuestion;

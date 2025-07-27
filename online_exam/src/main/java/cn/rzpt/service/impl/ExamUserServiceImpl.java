@@ -11,6 +11,7 @@ import cn.rzpt.properties.ExamJwtProperties;
 import cn.rzpt.service.ExamUserService;
 import cn.rzpt.util.ExamUserJwtUtil;
 import cn.rzpt.util.SimpleKeyGenerator;
+import cn.rzpt.util.SysUserJwtUtil;
 import cn.rzpt.util.ThrowUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.AllArgsConstructor;

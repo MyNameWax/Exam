@@ -6,7 +6,9 @@ import cn.rzpt.common.context.BaseContext;
 import cn.rzpt.common.global.exception.GlobalException;
 import cn.rzpt.common.global.result.DataResultCodeEnum;
 import cn.rzpt.properties.ExamJwtProperties;
+import cn.rzpt.properties.SysJwtProperties;
 import cn.rzpt.util.ExamUserJwtUtil;
+import cn.rzpt.util.SysUserJwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,6 +26,8 @@ public class AuthorizationFilter implements HandlerInterceptor {
 
     public static final String AUTHORIZATION = "Authorization";
     private final ExamJwtProperties examJwtProperties;
+    private final SysUserJwtUtil sysUserJwtUtil;
+    private final SysJwtProperties sysJwtProperties;
 
 
     @Override
@@ -43,9 +47,16 @@ public class AuthorizationFilter implements HandlerInterceptor {
             throw new GlobalException(DataResultCodeEnum.UNAUTHORIZED);
         }
         try {
-            Claims claims = ExamUserJwtUtil.parseJWT(examJwtProperties.getSecret(), request.getHeader(AUTHORIZATION));
-            String id = claims.get("id", String.class);
-            BaseContext.setCurrentId(id);
+            if (request.getRequestURL().toString().contains("/sys")) {
+                Claims claims = sysUserJwtUtil.parseJWT(sysJwtProperties.getSecret(), request.getHeader(AUTHORIZATION));
+                String id = claims.get("id", String.class);
+                BaseContext.setCurrentId(id);
+            }else {
+                Claims claims = ExamUserJwtUtil.parseJWT(examJwtProperties.getSecret(), request.getHeader(AUTHORIZATION));
+                String id = claims.get("id", String.class);
+                BaseContext.setCurrentId(id);
+            }
+
         } catch (Exception e) {
             throw new GlobalException(DataResultCodeEnum.UNAUTHORIZED);
         }

@@ -42,6 +42,7 @@ http.interceptors.response.use(
         return Promise.reject(res)
     },
     (err) => {
+        console.log("err", err.response)
         if (err.response.status === 401) {
             localStorage.removeItem('token')
             router.push('/')

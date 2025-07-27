@@ -18,7 +18,6 @@
         </div>
       </template>
     </a-page-header>
-
     <!-- 考试主体 -->
     <div class="exam-body">
       <!-- 左侧题目区域 -->
@@ -614,11 +613,6 @@ onMounted(() => {
 
 .card-footer {
   margin-top: auto;
-}
-
-/* 新增填空题样式 */
-.fill-blank-item {
-  margin-bottom: 16px;
 }
 
 .fill-blank-item p {

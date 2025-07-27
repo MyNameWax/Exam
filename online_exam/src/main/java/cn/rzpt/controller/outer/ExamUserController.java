@@ -1,4 +1,4 @@
-package cn.rzpt.controller;
+package cn.rzpt.controller.outer;
 
 import cn.rzpt.anno.PassLogin;
 import cn.rzpt.common.global.result.DataResult;

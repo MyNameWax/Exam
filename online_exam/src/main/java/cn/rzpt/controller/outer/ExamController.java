@@ -1,15 +1,11 @@
-package cn.rzpt.controller;
+package cn.rzpt.controller.outer;
 
-import cn.rzpt.anno.PassLogin;
 import cn.rzpt.common.global.result.DataResult;
-import cn.rzpt.constants.RedisKeyConstants;
-import cn.rzpt.model.bo.RedisMessageBO;
 import cn.rzpt.model.po.ExamQuestion;
 import cn.rzpt.model.request.ExamAddRequest;
 import cn.rzpt.model.response.ExamUserListResponse;
 import cn.rzpt.service.ExamService;
 import cn.rzpt.service.publish.RedisMessagePublisher;
-import cn.rzpt.service.publish.inter.MessageCallBack;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -17,7 +13,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -27,7 +22,6 @@ import java.util.List;
 public class ExamController {
 
     private final ExamService examService;
-    private final RedisMessagePublisher redisMessagePublisher;
 
     @PostMapping("/v1/add")
     @Operation(summary = "添加考试")
@@ -55,6 +49,5 @@ public class ExamController {
     public DataResult<List<ExamQuestion>> examQuestionList(@PathVariable String id) {
         return DataResult.success(examService.examQuestionList(id));
     }
-
 
 }

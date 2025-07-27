@@ -22,8 +22,6 @@ public class ExamSubmitRequest {
     @Schema(description = "考试题目答案")
     private List<QuestionAnswerDTO> answers;
 
-
-
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -44,6 +42,5 @@ public class ExamSubmitRequest {
         @Schema(description = "用户提交答案")
         private List<String> userAnswer;
     }
-
 
 }

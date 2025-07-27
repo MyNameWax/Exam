@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -14,10 +15,11 @@ import java.util.Date;
 import java.util.Map;
 
 
+@Component
 public class SysUserJwtUtil {
 
 
-    public static String createJWT(String secretKey, long ttlMillis, Map<String, String> claims) {
+    public String createJWT(String secretKey, long ttlMillis, Map<String, String> claims) {
         // 将密钥转换为Key对象
         Key key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
 
@@ -34,7 +36,7 @@ public class SysUserJwtUtil {
     }
 
 
-    public static Claims parseJWT(String secretKey, String token) {
+    public Claims parseJWT(String secretKey, String token) {
         try {
             // 将密钥转换为Key对象
             Key key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
