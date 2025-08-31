@@ -49,7 +49,7 @@ mybatis-plus:
 langchain4j:
   open-ai:
     chat-model:
-      api-key: sk-979ebca6edb2485eab69f8f09feb42c3
+      api-key: sk-b5e0867fb30d460bb460ab516753bd9e
       model-name: deepseek-chat
       log-requests: true
       log-responses: true

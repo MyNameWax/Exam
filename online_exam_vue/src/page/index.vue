@@ -54,7 +54,45 @@
         </a-form-item>
       </a-form>
     </a-modal>
+    <!--查看成绩的模态框 -->
+    <!-- 登录模态框 -->
+    <a-modal
+        v-model:visible="examModal"
+        title="查看成绩"
+        :closable="false"
+        :maskClosable="false"
 
+        centered
+        width="400px"
+    >
+      <!--查看成绩-->
+      <div class="exam-result">
+        <div class="exam-result-item">
+          <span class="exam-result-label">考生姓名：</span>
+          <span class="exam-result-value">{{ examResultForm.examUserName }}</span>
+        </div>
+        <div class="exam-result-item">
+          <span class="exam-result-label">考生类型：</span>
+          <span class="exam-result-value">{{ examResultForm.typeEnumsLabel }}</span>
+        </div>
+        <div class="exam-result-item">
+          <span class="exam-result-label">考生考号：</span>
+          <span class="exam-result-value">{{ examResultForm.examineeNumber }}</span>
+        </div>
+        <div class="exam-result-item">
+          <span class="exam-result-label">考生成绩：</span>
+          <span class="exam-result-value">{{ examResultForm.score }}</span>
+        </div>
+        <div class="exam-result-item">
+          <span class="exam-result-label">考生时间：</span>
+          <span class="exam-result-value">{{ examResultForm.minutes }}分</span>
+        </div>
+        <div class="exam-result-item">
+          <span class="exam-result-label">是否通过：</span>
+          <span class="exam-result-value">{{ examResultForm.examResult }}</span>
+        </div>
+      </div>
+    </a-modal>
     <!-- 顶部导航和标题 -->
     <a-page-header title="我的考试" class="page-header" :show-back="false">
       <template #extra>
@@ -183,6 +221,7 @@ import {
 import {message} from "ant-design-vue";
 import router from "../router/index.js";
 
+const examModal = ref(false)
 const userName = ref(localStorage.getItem("user") || "")
 const {proxy} = getCurrentInstance()
 const API = proxy.$API
@@ -198,6 +237,13 @@ const loginForm = reactive({
   examineeNumber: "",
   checkCode: "",
 });
+let examResultForm = reactive({
+  score: "",
+  minutes: "",
+  typeEnumsLabel: "",
+  examUserName: "",
+  examineeNumber: "",
+})
 
 // 登录表单验证规则
 const loginRules = {
@@ -388,7 +434,10 @@ const handleStartExam = (exam) => {
   } else if (exam.status === 2) {
     message.info(`查看考试结果: ${exam.title}`);
     API.exam.queryUserExamInfo(exam.id).then(res => {
-      console.log(res, "rews")
+      // 弹窗显示考试结果
+      examResultForm = res.data.data
+      console.log(examResultForm, "0---")
+      examModal.value = true
     })
   }
 };

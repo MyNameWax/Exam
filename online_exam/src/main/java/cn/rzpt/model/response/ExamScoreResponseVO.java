@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -34,5 +36,15 @@ public class ExamScoreResponseVO {
      * 考生号
      */
     private String examineeNumber;
+
+    /**
+     * 用户成绩信息
+     */
+    private List<UserScoreResponse> userScoreResponses;
+
+    /**
+     * 考试结果
+     */
+    private String examResult;
 
 }

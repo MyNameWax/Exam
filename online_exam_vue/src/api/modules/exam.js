@@ -36,9 +36,8 @@ export default {
     },
     queryUserExamInfo(params) {
         return http({
-            url: "/examinee-exam/v1/examinee-exam/result",
+            url: "/examinee-exam/v1/examinee-exam/result?examId=" + params,
             method: "get",
-            params
         })
     },
 

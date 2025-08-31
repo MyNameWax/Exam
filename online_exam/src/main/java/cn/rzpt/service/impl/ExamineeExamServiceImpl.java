@@ -27,7 +27,6 @@ import com.google.gson.reflect.TypeToken;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -116,10 +115,13 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
             }
             ScoreBO scoreBO = new ScoreBO();
             scoreBO.setUserAnswer(answerValue);
+            scoreBO.setTitle(question.getContent());
+            scoreBO.setTotalScore(question.getScore());
             AiScoreBO aiScoreBO = this.calculateQuestionScore(question, answerValue, examineeExam);
             scoreBO.setScore(aiScoreBO.getScore());
             totalScore += aiScoreBO.getScore();
             scoreBO.setReason(aiScoreBO.getReason() == null ? "" : aiScoreBO.getReason());
+            // 题目
             answerMap.put(answer.getQuestionId(), scoreBO);
         }
         // 更新考试记录
@@ -137,7 +139,6 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
         Exam exam = examService.getById(examId);
         List<ExamQuestion> questions = examQuestionService.lambdaQuery().eq(ExamQuestion::getExamId, examId)
                 .orderByAsc(ExamQuestion::getSort).list();
-        // 构建返回对象
         ExamDetailVO examDetailVO = new ExamDetailVO();
         examDetailVO.setExamId(exam.getId());
         examDetailVO.setTitle(exam.getTitle());
@@ -151,21 +152,31 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
     @Override
     public ExamScoreResponseVO examineeExamResult(String examId) {
         String currentLoginUserId = BaseContext.getCurrentId();
+        Exam exam = examService.getById(examId);
         ExamUser examUser = examUserService.lambdaQuery().eq(ExamUser::getId, currentLoginUserId).one();
         ExamineeExam examineeExam = this.lambdaQuery().eq(ExamineeExam::getExamId, examId)
                 .eq(ExamineeExam::getExamineeId, currentLoginUserId).one();
         ThrowUtil.throwIf(examineeExam == null ||
                 !examineeExam.getStatus().equals(ExamineeExamStatus.FINISH.getCode()) ||
                 examineeExam.getSubmitTime() == null, DataResultCodeEnum.REQUEST_ERROR);
+        // 做了一个兜底方案
         ThrowUtil.throwIf(examineeExam.getScore() == null, DataResultCodeEnum.EXAM_SCORE_NOT_PUBLISHED);
         LocalDateTime startTime = examineeExam.getStartTime();
         LocalDateTime submitTime = examineeExam.getSubmitTime();
+        // 根据考生不同类型: 考虑当地政策 是否需要给与加分 | 比如艺考生+ 10分 | 体育生 + 20分
         Integer type = examUser.getType();
         String examineeName = examUser.getExamineeName();
         String examineeNumber = examUser.getExamineeNumber();
+        String examResult = "";
+        if (Math.round(examineeExam.getScore() * 100) / 100.0D < exam.getPassScore()) {
+            examResult = "未通过";
+        }else {
+            examResult = "通过";
+        }
         return ExamScoreResponseVO.builder()
                 .typeEnumsLabel(ExamUserType.getByCode(type))
                 .examUserName(examineeName)
+                .examResult(examResult)
                 .score(Math.round(examineeExam.getScore() * 100) / 100.0D)
                 .examineeNumber(examineeNumber)
                 .minutes(startTime.until(submitTime, java.time.temporal.ChronoUnit.MINUTES))
@@ -247,7 +258,7 @@ public class ExamineeExamServiceImpl extends ServiceImpl<ExamineeExamMapper, Exa
     }
 
     /**
-     * 简单题阅卷（AI阅卷）
+     * 简答题阅卷（AI阅卷）
      */
     private AiScoreBO calulateEaSayAnswer(ExamQuestion question, String answerValue) {
         String aiScoreMessage = SystemConstants.ExamMarkConstants.generatorMessage(
