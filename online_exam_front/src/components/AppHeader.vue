@@ -42,11 +42,11 @@ const logout = () => {
 const breadcrumbList = computed(() => {
   // 简单面包屑，实际可根据路由meta或配置优化
   const pathArr = route.path.split("/").filter(Boolean);
-  if (pathArr.length === 0) return ["首页"];
-  if (pathArr[0] === "home") return ["首页"];
+  // if (pathArr.length === 0) return ["首页"];
+  // if (pathArr[0] === "home") return ["首页"];
   return [
     "首页",
-    ...pathArr.slice(1).map((i) => (i === "exam" ? "我的考试" : i)),
+    ...pathArr.slice(1).map((i) => (i === "exam" ? "考试列表" : i)),
   ];
 });
 </script>

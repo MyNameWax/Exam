@@ -2,6 +2,38 @@ package cn.rzpt.constants;
 
 public interface SystemConstants {
 
+
+    interface ExamTypeStatusConstants {
+
+        /**
+         * 未开始
+         */
+        Integer NOT_START = 0;
+
+        /**
+         * 可参加
+         */
+        Integer CAN_JOIN = 1;
+
+        /**
+         * 已完成
+         */
+        Integer FINISH = 2;
+
+        /**
+         * 已过期
+         */
+        Integer EXPIRE = 3;
+
+        String SUCCESS = "success";
+
+        String PRIMARY = "primary";
+
+        String ERROR = "error";
+
+        String WARNING = "warning";
+    }
+
     interface ExamUserLoginConstants {
 
         /**

@@ -1,5 +1,7 @@
 package cn.rzpt.model.response;
 
+import cn.rzpt.anno.SensitiveData;
+import cn.rzpt.enums.SensitiveType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,6 +37,7 @@ public class ExamScoreResponseVO {
     /**
      * 考生号
      */
+    @SensitiveData(type = SensitiveType.EXAM_NUMBER)
     private String examineeNumber;
 
     /**

@@ -96,3 +96,16 @@ CREATE TABLE `exam_score`
     `del_flag`     TINYINT     NOT NULL DEFAULT '0' COMMENT '是否删除(0: 未删除 1:已删除)',
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='考试成绩表';
+
+
+create table sys_notice
+(
+    `id`          VARCHAR(36)  NOT NULL COMMENT '公告ID',
+    `title`       VARCHAR(100) NOT NULL COMMENT '公告标题',
+    `content`     text         NOT NULL COMMENT '公告内容',
+    `create_by`   BIGINT       NOT NULL COMMENT '创建人',
+    `create_time` datetime     NOT NULL COMMENT '创建时间',
+    `update_by`   BIGINT       NOT NULL COMMENT '修改人',
+    `update_time` datetime     NOT NULL COMMENT '修改时间',
+    `del_flag`    TINYINT      NOT NULL DEFAULT '0' COMMENT '是否删除(0: 未删除 1:已删除)'
+) COMMENT '系统公告表';

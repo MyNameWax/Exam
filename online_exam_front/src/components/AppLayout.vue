@@ -1,31 +1,35 @@
 <template>
   <a-layout class="main-layout">
     <a-layout-sider
-      collapsible
-      :collapsed="collapsed"
-      @collapse="collapsed = $event"
-      width="200"
+        collapsible
+        :collapsed="collapsed"
+        @collapse="collapsed = $event"
+        width="200"
     >
       <div class="sider-logo">
-        <img src="../assets/logo.jpg" alt="logo" />
+        <img src="../assets/logo.jpg" alt="logo"/>
         <span v-if="!collapsed">企业在线考试</span>
       </div>
       <a-menu theme="dark" mode="inline" :selectedKeys="[selectedKey]">
         <a-menu-item key="home" @click="goPage('/home')">
-          <template #icon><icon-home /></template>
+          <template #icon>
+            <icon-home/>
+          </template>
           首页
         </a-menu-item>
+        <a-menu-item key="date" @click="goPage('/date')">
+          考试日历
+        </a-menu-item>
         <a-menu-item key="exam" @click="goPage('/exam')">
-          <template #icon><icon-file-text /></template>
-          我的考试
+          考试列表
         </a-menu-item>
       </a-menu>
     </a-layout-sider>
     <a-layout>
-      <AppHeader />
+      <AppHeader/>
       <a-layout-content class="main-content">
         <a-config-provider :locale="locale">
-          <RouterView />
+          <RouterView/>
         </a-config-provider>
       </a-layout-content>
     </a-layout>
@@ -33,14 +37,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import {computed, ref} from "vue";
+import {useRoute, useRouter} from "vue-router";
 import AppHeader from "./AppHeader.vue";
-import {
-  HomeOutlined as IconHome,
-  FileTextOutlined as IconFileText,
-} from "@ant-design/icons-vue";
+import {FileTextOutlined as IconFileText, HomeOutlined as IconHome,} from "@ant-design/icons-vue";
 import zhCN from "ant-design-vue/es/locale/zh_CN";
+
 let locale = ref(zhCN);
 const collapsed = ref(false);
 const router = useRouter();
@@ -55,6 +57,7 @@ const goPage = (path) => {
 .main-layout {
   min-height: 100vh;
 }
+
 .sider-logo {
   height: 48px;
   display: flex;
@@ -64,10 +67,12 @@ const goPage = (path) => {
   font-weight: bold;
   color: #fff;
 }
+
 .sider-logo img {
   width: 32px;
   margin-right: 10px;
 }
+
 .main-content {
   margin: 24px 16px;
   background: #fff;

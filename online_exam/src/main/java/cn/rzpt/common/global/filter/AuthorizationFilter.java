@@ -47,7 +47,7 @@ public class AuthorizationFilter implements HandlerInterceptor {
             throw new GlobalException(DataResultCodeEnum.UNAUTHORIZED);
         }
         try {
-            if (request.getRequestURL().toString().contains("/sys")) {
+            if (request.getRequestURL().toString().contains("/sys") || request.getRequestURL().toString().contains("/index")) {
                 Claims claims = sysUserJwtUtil.parseJWT(sysJwtProperties.getSecret(), request.getHeader(AUTHORIZATION));
                 String id = claims.get("id", String.class);
                 BaseContext.setCurrentId(id);
